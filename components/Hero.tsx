@@ -499,24 +499,6 @@ export default function Hero() {
       {/* Loading Screen */}
       {!sceneReady && <Loader />}
 
-      {/* Mobile scroll button (separate from the text overlay for better click handling) */}
-      {isMobile && (
-        <div className="absolute bottom-8 left-0 right-0 z-50 flex justify-center">
-          <motion.button 
-            className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/50 text-white font-medium shadow-lg hover:bg-white/30 transition-all"
-            onClick={scrollPastHero}
-            initial={{ opacity: 0 }}
-            animate={{ 
-              opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
-              y: scrollY < scrollThreshold ? 0 : 20
-            }}
-            transition={{ duration: 0.3 }}
-          >
-            Explore More
-          </motion.button>
-        </div>
-      )}
-
       {/* Text Overlay */}
       <div 
         className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${
@@ -528,7 +510,7 @@ export default function Hero() {
         
         {/* Center content container */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="text-center pointer-events-none">
+          <div className={`text-center ${isMobile ? 'pointer-events-auto' : 'pointer-events-none'}`}>
             <motion.h1
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: sceneReady ? 1 : 0, y: sceneReady ? 0 : 20 }}
@@ -541,10 +523,30 @@ export default function Hero() {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: sceneReady ? 1 : 0, y: sceneReady ? 0 : 20 }}
               transition={{ duration: 0.8, delay: 0.5 }}
-              className="text-2xl font-light text-gray-200 drop-shadow-2xl [text-shadow:_0_4px_24px_rgba(0,0,0,1)] pointer-events-none"
+              className="text-2xl font-light text-gray-200 drop-shadow-2xl [text-shadow:_0_4px_24px_rgba(0,0,0,1)] pointer-events-none mb-6"
             >
               Incoming Software Engineer & Computer Science Graduate Student
             </motion.p>
+            
+            {/* Mobile button positioned directly under the text */}
+            {isMobile && (
+              <motion.div 
+                className="mt-8 z-50 flex justify-center"
+                initial={{ opacity: 0 }}
+                animate={{ 
+                  opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
+                  y: sceneReady ? 0 : 20
+                }}
+                transition={{ duration: 0.8, delay: 0.7 }}
+              >
+                <button 
+                  onClick={scrollPastHero}
+                  className="bg-white/20 backdrop-blur-sm px-6 py-2 rounded-full border border-white/50 text-white font-medium shadow-lg hover:bg-white/30 transition-all pointer-events-auto"
+                >
+                  Explore More
+                </button>
+              </motion.div>
+            )}
           </div>
         </div>
         
