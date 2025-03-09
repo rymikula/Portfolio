@@ -165,7 +165,7 @@ body::after {
     background-color: transparent;
   }
 
-  /* Animated mesh background for sections */
+  /* Enhanced mesh grid background */
   .mesh-grid {
     position: absolute;
     inset: -50% -50%;
@@ -175,8 +175,8 @@ body::after {
     pointer-events: none;
     background-size: 40px 40px;
     background-image:
-      linear-gradient(to right, rgba(161, 122, 92, 0.07) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(161, 122, 92, 0.07) 1px, transparent 1px);
+      linear-gradient(to right, rgba(178, 147, 122, 0.1) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(178, 147, 122, 0.1) 1px, transparent 1px);
     mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 70%);
     transform-origin: center;
     animation: mesh-animation 180s linear infinite;
@@ -258,18 +258,24 @@ body::after {
     animation: gradient-flow 15s ease infinite alternate;
   }
   
-  /* Subtle aurora effect */
+  /* Enhanced aurora effect */
   .aurora-bg {
     position: fixed;
     inset: 0;
-    opacity: 0.55;
+    opacity: 0.7; /* Increased from 0.55 */
     z-index: 2;
     overflow: hidden;
     pointer-events: none;
     background: 
-      linear-gradient(90deg, rgba(138, 101, 73, 0) 0%, rgba(138, 101, 73, 1) 50%, rgba(138, 101, 73, 0) 100%);
-    filter: blur(60px);
-    transform: rotate(-20deg);
+      linear-gradient(90deg, 
+        rgba(161, 122, 92, 0) 0%, 
+        rgba(178, 147, 122, 0.4) 30%, 
+        rgba(196, 173, 153, 0.6) 50%, 
+        rgba(178, 147, 122, 0.4) 70%, 
+        rgba(161, 122, 92, 0) 100%
+      );
+    filter: blur(50px);
+    transform: rotate(-15deg) scale(1.2);
     transform-origin: center;
     animation: aurora-flow 25s ease-in-out infinite alternate;
     will-change: transform, opacity, filter;
@@ -279,46 +285,62 @@ body::after {
   .floating-blob {
     position: absolute;
     border-radius: 50%;
-    background: linear-gradient(
-      135deg, 
-      var(--brown-600) 0%, 
-      var(--brown-800) 50%,
-      var(--brown-700) 100%
+    background: radial-gradient(
+      circle at center,
+      rgba(186, 147, 117, 0.4) 0%,
+      rgba(161, 122, 92, 0.35) 30%,
+      rgba(138, 101, 73, 0.25) 60%,
+      rgba(0, 0, 0, 0) 100%
     );
-    filter: blur(80px);
+    filter: blur(40px);
     z-index: 3;
     pointer-events: none;
-    opacity: 0.25;
+    opacity: 0.35;
     animation: blob-float 30s ease-in-out infinite;
     will-change: transform, border-radius;
     transition: transform 0.3s ease-out;
   }
   
   .floating-blob-1 {
-    width: 40vw;
-    height: 40vw;
-    top: 0;
-    left: 0;
-    animation-delay: 0s;
-  }
-  
-  .floating-blob-2 {
-    width: 30vw;
-    height: 30vw;
-    bottom: 0;
-    right: 0;
+    top: 10%;
+    left: -10%;
+    background: radial-gradient(
+      circle at center,
+      rgba(214, 199, 184, 0.5) 0%,
+      rgba(196, 173, 153, 0.4) 30%,
+      rgba(161, 122, 92, 0.3) 70%,
+      rgba(0, 0, 0, 0) 100%
+    );
     animation-delay: -5s;
   }
   
-  .floating-blob-3 {
-    width: 25vw;
-    height: 25vw;
-    top: 40%;
-    left: 60%;
+  .floating-blob-2 {
+    bottom: 5%;
+    right: -20%;
+    background: radial-gradient(
+      circle at center,
+      rgba(226, 208, 189, 0.45) 0%,
+      rgba(186, 147, 117, 0.35) 30%,
+      rgba(138, 101, 73, 0.25) 70%,
+      rgba(0, 0, 0, 0) 100%
+    );
     animation-delay: -10s;
   }
   
-  /* Moving stars/particles */
+  .floating-blob-3 {
+    top: -10%;
+    right: 5%;
+    background: radial-gradient(
+      circle at center,
+      rgba(196, 173, 153, 0.5) 0%,
+      rgba(178, 147, 122, 0.4) 30%,
+      rgba(138, 101, 73, 0.3) 70%,
+      rgba(0, 0, 0, 0) 100%
+    );
+    animation-delay: -15s;
+  }
+  
+  /* Enhanced stars background */
   .stars-bg {
     position: fixed;
     top: 0;
@@ -334,11 +356,22 @@ body::after {
     position: absolute;
     background-color: #fff;
     border-radius: 50%;
-    box-shadow: 0 0 3px 1px rgba(220, 210, 200, 0.6);
+    box-shadow: 0 0 5px 1px rgba(255, 245, 235, 0.7);
     z-index: 1;
     animation: star-twinkle 5s infinite ease-in-out;
   }
   
+  /* Add some colored stars with brownish tint for variety */
+  .star:nth-child(3n+1) {
+    background-color: #f9f6f3; /* Slight cream color */
+    box-shadow: 0 0 6px 2px rgba(248, 240, 230, 0.7);
+  }
+
+  .star:nth-child(4n+2) {
+    background-color: #f1ede3; /* Warm cream color */
+    box-shadow: 0 0 7px 2px rgba(241, 237, 227, 0.8);
+  }
+
   /* Generate 200 stars with different properties */
   @for $i from 1 through 200 {
     .star:nth-child(#{$i}) {
@@ -428,24 +461,22 @@ body::after {
 
 @keyframes mesh-animation {
   0% {
-    transform: rotate(0deg) scale(1.2);
-    opacity: 0.03;
+    transform: rotate(0deg) scale(1);
+    opacity: 0.3;
   }
   25% {
-    transform: rotate(0.5deg) scale(1.25);
-    opacity: 0.035;
+    opacity: 0.4;
   }
   50% {
-    transform: rotate(1deg) scale(1.3);
-    opacity: 0.04;
+    transform: rotate(0.5deg) scale(1.05);
+    opacity: 0.5;
   }
   75% {
-    transform: rotate(0.5deg) scale(1.25);
-    opacity: 0.035;
+    opacity: 0.4;
   }
   100% {
-    transform: rotate(0deg) scale(1.2);
-    opacity: 0.03;
+    transform: rotate(0deg) scale(1);
+    opacity: 0.3;
   }
 }
 
@@ -525,24 +556,14 @@ body::after {
 }
 
 @keyframes aurora-flow {
-  0% {
-    transform: rotate(-20deg) translateY(5%) scale(1);
-    opacity: 0.05;
-    filter: blur(60px);
+  0%, 100% {
+    transform: rotate(-15deg) translateY(-5%) scale(1.2);
+    opacity: 0.65;
+    filter: blur(50px);
   }
-  33% {
-    transform: rotate(-21deg) translateY(0%) scale(1.05);
-    opacity: 0.065;
-    filter: blur(65px);
-  }
-  66% {
-    transform: rotate(-22deg) translateY(-5%) scale(1.1);
-    opacity: 0.08;
-    filter: blur(70px);
-  }
-  100% {
-    transform: rotate(-20deg) translateY(5%) scale(1);
-    opacity: 0.05;
+  50% {
+    transform: rotate(-18deg) translateY(5%) scale(1.3);
+    opacity: 0.75;
     filter: blur(60px);
   }
 }
@@ -575,9 +596,17 @@ body::after {
     opacity: var(--base-opacity);
     transform: scale(1);
   }
+  25% {
+    opacity: calc(var(--base-opacity) * 1.2);
+    transform: scale(1.2);
+  }
   50% {
     opacity: calc(var(--base-opacity) * 1.5);
     transform: scale(1.4);
+  }
+  75% {
+    opacity: calc(var(--base-opacity) * 1.2);
+    transform: scale(1.2);
   }
 }
 
@@ -887,9 +916,9 @@ a:not(.button-primary):not(.button-secondary):hover::after {
   left: -10%;
   background: radial-gradient(
     circle at center,
-    rgba(176, 137, 107, 0.4) 0%,
-    rgba(158, 121, 93, 0.3) 40%,
-    rgba(114, 80, 55, 0.2) 70%,
+    rgba(214, 199, 184, 0.5) 0%,
+    rgba(196, 173, 153, 0.4) 30%,
+    rgba(161, 122, 92, 0.3) 70%,
     rgba(0, 0, 0, 0) 100%
   );
   animation-delay: -5s;
@@ -900,9 +929,9 @@ a:not(.button-primary):not(.button-secondary):hover::after {
   right: -20%;
   background: radial-gradient(
     circle at center,
-    rgba(186, 147, 117, 0.35) 0%,
-    rgba(168, 131, 103, 0.25) 40%,
-    rgba(138, 101, 73, 0.15) 70%,
+    rgba(226, 208, 189, 0.45) 0%,
+    rgba(186, 147, 117, 0.35) 30%,
+    rgba(138, 101, 73, 0.25) 70%,
     rgba(0, 0, 0, 0) 100%
   );
   animation-delay: -10s;
@@ -913,9 +942,9 @@ a:not(.button-primary):not(.button-secondary):hover::after {
   right: 5%;
   background: radial-gradient(
     circle at center,
-    rgba(196, 157, 127, 0.4) 0%,
-    rgba(178, 141, 113, 0.3) 40%,
-    rgba(148, 111, 83, 0.2) 70%,
+    rgba(196, 173, 153, 0.5) 0%,
+    rgba(178, 147, 122, 0.4) 30%,
+    rgba(138, 101, 73, 0.3) 70%,
     rgba(0, 0, 0, 0) 100%
   );
   animation-delay: -15s;
@@ -1007,6 +1036,16 @@ a:not(.button-primary):not(.button-secondary):hover::after {
   opacity: var(--opacity);
 }
 
+/* Add a subtle glow animation to some particles */
+.particle:nth-child(3n) {
+  animation: particle-animation-glow 15s infinite linear;
+}
+
+/* Add a pulse animation to some particles */
+.particle:nth-child(5n) {
+  animation: particle-animation-pulse 18s infinite linear;
+}
+
 /* Make sure particles animate correctly */
 @keyframes particle-animation {
   0% {
@@ -1032,4 +1071,116 @@ a:not(.button-primary):not(.button-secondary):hover::after {
     transform: translateY(calc(-100vh - 50px)) translateX(calc(var(--drift) * 100px));
     opacity: 0;
   }
+}
+
+/* Glow effect for particles */
+@keyframes particle-animation-glow {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: var(--opacity);
+    box-shadow: 0 0 12px 3px rgba(186, 147, 117, 0.8);
+  }
+  10% {
+    opacity: var(--opacity);
+    transform: scale(1.3) translateY(10px);
+    box-shadow: 0 0 18px 5px rgba(214, 199, 184, 0.9);
+  }
+  30% {
+    transform: scale(1) translateY(calc(-30vh));
+    box-shadow: 0 0 12px 3px rgba(186, 147, 117, 0.8);
+  }
+  85% {
+    transform: scale(1) translateY(calc(-80vh));
+    opacity: var(--opacity);
+    box-shadow: 0 0 12px 3px rgba(186, 147, 117, 0.8);
+  }
+  90% {
+    opacity: var(--opacity);
+    transform: scale(1.2) translateY(calc(-90vh));
+    box-shadow: 0 0 18px 5px rgba(214, 199, 184, 0.9);
+  }
+  100% {
+    transform: translateY(calc(-100vh - 50px)) translateX(calc(var(--drift) * 100px));
+    opacity: 0;
+  }
+}
+
+/* Pulse effect for particles */
+@keyframes particle-animation-pulse {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: var(--opacity);
+  }
+  10% {
+    opacity: var(--opacity);
+    transform: scale(1.5) translateY(10px);
+  }
+  15% {
+    transform: scale(0.8) translateY(calc(-10vh));
+  }
+  20% {
+    transform: scale(1.2) translateY(calc(-15vh));
+  }
+  30% {
+    transform: scale(1) translateY(calc(-30vh));
+  }
+  40% {
+    transform: scale(1.3) translateY(calc(-40vh));
+  }
+  50% {
+    transform: scale(0.9) translateY(calc(-50vh));
+  }
+  60% {
+    transform: scale(1.1) translateY(calc(-60vh));
+  }
+  85% {
+    transform: scale(1) translateY(calc(-80vh));
+    opacity: var(--opacity);
+  }
+  90% {
+    opacity: var(--opacity);
+    transform: scale(1.4) translateY(calc(-90vh));
+  }
+  100% {
+    transform: translateY(calc(-100vh - 50px)) translateX(calc(var(--drift) * 100px));
+    opacity: 0;
+  }
+}
+
+/* 
+ * Animation Optimization:
+ * 1. All animations use will-change only for properties that actually change
+ * 2. We use transform and opacity for most animations as they're GPU-accelerated
+ * 3. Hardware acceleration hints are applied to animated elements
+ * 4. Animation complexity scales down automatically for mobile/low-performance devices
+ * 5. Reduced motion preferences are respected
+ */
+
+/* Class to disable most animations for low-performance devices */
+.reduce-animations .particles-container,
+.reduce-animations .aurora-bg,
+.reduce-animations .floating-blob,
+.reduce-animations .stars-bg {
+  animation: none !important;
+}
+
+.reduce-animations .particle {
+  animation-duration: 30s !important; /* Much slower animations */
+  opacity: 0.5;
+}
+
+.reduce-animations .mesh-grid {
+  opacity: 0.2;
+  animation-duration: 300s !important; /* Much slower animation */
+}
+
+/* Ensure animations use hardware acceleration */
+.animate-optimized {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  -webkit-transform: translateZ(0);
 } 

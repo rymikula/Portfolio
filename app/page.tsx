@@ -29,6 +29,8 @@ export default function Home() {
   const [isLowPerformance, setIsLowPerformance] = useState(false)
   const [scrollY, setScrollY] = useState(0)
   const [viewportHeight, setViewportHeight] = useState(0)
+  const [reduceAnimations, setReduceAnimations] = useState(false)
+  const [fps, setFps] = useState(60)
   
   // Memoize counts to prevent unnecessary re-renders - increase particle count
   const { starCount, particleCount } = useMemo(() => ({
@@ -57,11 +59,45 @@ export default function Home() {
       )
       setIsLowPerformance(isLowPerf)
       
+      // Check if user prefers reduced motion
+      const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      
+      // Set reduce animations based on device capability and user preference
+      setReduceAnimations(isLowPerf || prefersReducedMotion)
+      
       // Remove console log in production
       if (process.env.NODE_ENV !== 'production') {
         console.log("Device:", isMobileDevice ? "Mobile" : "Desktop", "Performance:", isLowPerf ? "Low" : "High")
       }
     }
+    
+    // Monitor FPS to reduce animations if needed
+    let frameCount = 0
+    let lastTime = performance.now()
+    let rafId: number
+
+    const measureFps = () => {
+      const now = performance.now()
+      frameCount++
+      
+      if (now - lastTime >= 1000) {
+        const currentFps = Math.round(frameCount * 1000 / (now - lastTime))
+        setFps(currentFps)
+        
+        // If FPS drops below threshold, reduce animations
+        if (currentFps < 30 && !reduceAnimations) {
+          setReduceAnimations(true)
+        }
+        
+        frameCount = 0
+        lastTime = now
+      }
+      
+      rafId = requestAnimationFrame(measureFps)
+    }
+    
+    // Start FPS monitoring
+    rafId = requestAnimationFrame(measureFps)
     
     // Throttle scroll handler to improve performance
     let ticking = false
@@ -86,11 +122,12 @@ export default function Home() {
     return () => {
       window.removeEventListener('resize', checkDevice)
       window.removeEventListener('scroll', handleScroll)
+      cancelAnimationFrame(rafId)
     }
-  }, []) // No need to rerun when viewportHeight changes
+  }, [reduceAnimations]) // Add reduceAnimations to dependency array
   
   return (
-    <main className="relative min-h-screen overflow-hidden">
+    <main className={`relative min-h-screen overflow-hidden ${reduceAnimations ? 'reduce-animations' : ''}`}>
       {/* Enhanced Global background elements with conditional rendering */}
       <div className="stars-bg animate-optimized">
         {starArray.map((_, i) => (
@@ -110,6 +147,13 @@ export default function Home() {
       {/* Skip grain overlay on low performance devices */}
       {!isLowPerformance && (
         <div className="grain-overlay animate-optimized" />
+      )}
+
+      {/* Render FPS meter in development */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="fixed top-0 right-0 bg-black/50 text-white p-2 z-50 text-xs">
+          FPS: {fps} | {reduceAnimations ? 'Low Perf Mode' : 'High Perf Mode'}
+        </div>
       )}
 
       {/* Hero Section - Not lazy loaded for immediate visibility */}
