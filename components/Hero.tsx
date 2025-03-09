@@ -412,9 +412,21 @@ export default function Hero() {
   const [sceneReady, setSceneReady] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const scrollThreshold = 100; // Hide indicator after scrolling 100px
+  const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Check if device is mobile
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    // Initial check
+    checkMobile();
+    
+    // Add resize listener
+    window.addEventListener('resize', checkMobile);
     
     // Add touch event handler for mobile
     const handleTouchMove = (e: TouchEvent) => {
@@ -444,8 +456,18 @@ export default function Hero() {
     return () => {
       document.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('resize', checkMobile);
     };
   }, []);
+
+  // Function to handle scroll past hero section
+  const scrollPastHero = () => {
+    const heroHeight = window.innerHeight;
+    window.scrollTo({
+      top: heroHeight,
+      behavior: 'smooth'
+    });
+  };
 
   return (
     <div className="relative h-screen w-full bg-[#1a0f0a] z-20 overflow-hidden">
@@ -476,6 +498,24 @@ export default function Hero() {
 
       {/* Loading Screen */}
       {!sceneReady && <Loader />}
+
+      {/* Mobile scroll button (separate from the text overlay for better click handling) */}
+      {isMobile && (
+        <div className="absolute bottom-8 left-0 right-0 z-50 flex justify-center">
+          <motion.button 
+            className="bg-white/20 backdrop-blur-sm px-4 py-2 rounded-full border border-white/50 text-white font-medium shadow-lg hover:bg-white/30 transition-all"
+            onClick={scrollPastHero}
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
+              y: scrollY < scrollThreshold ? 0 : 20
+            }}
+            transition={{ duration: 0.3 }}
+          >
+            Explore More
+          </motion.button>
+        </div>
+      )}
 
       {/* Text Overlay */}
       <div 
@@ -508,33 +548,35 @@ export default function Hero() {
           </div>
         </div>
         
-        {/* Scroll indicator */}
-        <motion.div 
-          className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none"
-          initial={{ opacity: 0 }}
-          animate={{ 
-            opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
-            y: scrollY < scrollThreshold ? 0 : 20
-          }}
-          transition={{ duration: 0.3 }}
-        >
-          <div className="flex flex-col items-center">
-            <p className="text-white text-sm mb-2">Scroll Down</p>
-            <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center p-1">
-              <motion.div 
-                className="w-1 h-2 bg-white rounded-full"
-                animate={{ 
-                  y: [0, 6, 0],
-                }}
-                transition={{ 
-                  repeat: Infinity, 
-                  duration: 1.5,
-                  ease: "easeInOut"
-                }}
-              />
+        {/* Scroll indicator (desktop only) */}
+        {!isMobile && (
+          <motion.div 
+            className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ 
+              opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
+              y: scrollY < scrollThreshold ? 0 : 20
+            }}
+            transition={{ duration: 0.3 }}
+          >
+            <div className="flex flex-col items-center">
+              <p className="text-white text-sm mb-2">Scroll Down</p>
+              <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center p-1">
+                <motion.div 
+                  className="w-1 h-2 bg-white rounded-full"
+                  animate={{ 
+                    y: [0, 6, 0],
+                  }}
+                  transition={{ 
+                    repeat: Infinity, 
+                    duration: 1.5,
+                    ease: "easeInOut"
+                  }}
+                />
+              </div>
             </div>
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
       </div>
     </div>
   )
