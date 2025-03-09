@@ -353,7 +353,7 @@ export default function Experience() {
       <div className="section-gradient"></div>
       
       {/* Education Section */}
-      <div className="mb-16">
+      <div id="education" className="mb-16">
         <motion.div
           ref={educationRef}
           initial={{ opacity: 0, y: 30 }}
@@ -389,7 +389,7 @@ export default function Experience() {
       </div>
       
       {/* Work Experience Section */}
-      <div>
+      <div id="work-experience">
         <motion.div
           ref={experienceRef}
           initial={{ opacity: 0, y: 30 }}

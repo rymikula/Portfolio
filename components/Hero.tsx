@@ -18,7 +18,7 @@ import {
   BakeShadows,
   PerformanceMonitor
 } from '@react-three/drei'
-import { useRef, useState, useEffect, Suspense, useMemo } from 'react'
+import { useRef, useState, useEffect, Suspense, useMemo, useCallback, memo } from 'react'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
 
@@ -31,7 +31,8 @@ const AppContext = createContext({
   isLowPerformance: false
 })
 
-function SpaceSkybox() {
+// Memoize skybox component to prevent unnecessary re-renders
+const SpaceSkybox = memo(function SpaceSkybox() {
   return (
     <>
       <Environment
@@ -49,7 +50,7 @@ function SpaceSkybox() {
       <fog attach="fog" args={['#0a0227', 15, 35]} />
     </>
   )
-}
+})
 
 function AnimatedShape() {
   const mainMeshRef = useRef<THREE.Mesh>(null)
@@ -372,7 +373,7 @@ function StarField() {
   )
 }
 
-// Optimization component to pause/resume rendering and adjust quality
+// Use throttling for touch handlers and animation frames
 function RenderOptimizer() {
   const { gl, scene, camera, viewport } = useThree()
   const { isVisible, isMobile, isLowPerformance } = useContext(AppContext)
@@ -417,7 +418,8 @@ function RenderOptimizer() {
   return null;
 }
 
-function Scene() {
+// Memoize the Scene component
+const Scene = memo(function Scene() {
   const { isVisible, isMobile, isLowPerformance } = useContext(AppContext)
   
   // Local state for scene-specific performance adjustments
@@ -533,18 +535,20 @@ function Scene() {
       />
     </>
   )
-}
+})
 
-function Loader() {
+// Memoize the Loader component
+const Loader = memo(function Loader() {
   const { progress } = useProgress();
   return (
     <div className="absolute inset-0 flex items-center justify-center bg-[#030014] text-white">
       <div className="text-2xl">{progress.toFixed(0)}%</div>
     </div>
   );
-}
+})
 
-export default function Hero() {
+// Export the optimized Hero component
+export default memo(function Hero() {
   const [sceneReady, setSceneReady] = useState(false);
   const [scrollY, setScrollY] = useState(0);
   const scrollThreshold = 100; // Hide indicator after scrolling 100px
@@ -769,4 +773,4 @@ export default function Hero() {
       </AppContext.Provider>
     </div>
   )
-} 
+}) 

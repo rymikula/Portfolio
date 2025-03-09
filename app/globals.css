@@ -43,12 +43,20 @@ html {
   scroll-behavior: smooth;
   scroll-padding-top: 2rem;
   overflow-x: hidden;
+  text-size-adjust: 100%; /* Prevent automatic font size adjustment */
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   min-height: 100vh;
   color: var(--gray-100);
   background-color: var(--gray-950);
+  font-smoothing: antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  background-attachment: fixed; /* Prevent repeated GPU repaints */
   position: relative;
   font-feature-settings: "salt", "ss01";
   overflow-x: hidden;
@@ -135,7 +143,11 @@ body::after {
   /* Content section styling */
   .content-section {
     position: relative;
-    z-index: 5;
+    z-index: 10;
+    padding: 2rem;
+    margin-bottom: 3rem;
+    content-visibility: auto;
+    contain-intrinsic-size: 0 500px;
   }
 
   /* Enhanced section styling */
@@ -159,12 +171,12 @@ body::after {
     inset: -50% -50%;
     width: 200%;
     height: 200%;
-    z-index: -2;
+    z-index: 1;
     pointer-events: none;
     background-size: 40px 40px;
     background-image:
-      linear-gradient(to right, rgba(100, 80, 60, 0.03) 1px, transparent 1px),
-      linear-gradient(to bottom, rgba(100, 80, 60, 0.03) 1px, transparent 1px);
+      linear-gradient(to right, rgba(161, 122, 92, 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(161, 122, 92, 0.07) 1px, transparent 1px);
     mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 70%);
     transform-origin: center;
     animation: mesh-animation 180s linear infinite;
@@ -178,7 +190,7 @@ body::after {
     width: 140%;
     height: 140%;
     z-index: 1;
-    opacity: 0.12;
+    opacity: 0.18;
     pointer-events: none;
     background-image: url('/noise.svg');
     background-repeat: repeat;
@@ -192,36 +204,41 @@ body::after {
   .particles-container {
     position: fixed;
     inset: 0;
-    z-index: -1;
-    overflow: hidden;
-    opacity: 0.8;
+    z-index: 3;
+    overflow: visible;
+    opacity: 1;
     pointer-events: none;
   }
   
   .particle {
     position: absolute;
-    background-color: var(--cream-100);
+    background: linear-gradient(
+      135deg,
+      var(--brown-200) 0%,
+      var(--brown-300) 100%
+    );
+    box-shadow: 0 0 8px 2px rgba(214, 199, 184, 0.7);
     border-radius: 50%;
     opacity: 0;
     animation-name: particle-animation;
     animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
     animation-iteration-count: infinite;
     --drift: 0;
-    --opacity: 0.5;
+    --opacity: 0.8;
     will-change: transform, opacity;
   }
   
   /* Create 50 unique particles with different positions, sizes, and animation durations */
   @for $i from 1 through 50 {
     .particle:nth-child(#{$i}) {
-      width: calc(1px + #{random(4)}px);
-      height: calc(1px + #{random(4)}px);
+      width: calc(3px + #{random(6)}px);
+      height: calc(3px + #{random(6)}px);
       top: calc(#{random(100)}vh);
       left: calc(#{random(100)}vw);
-      --opacity: calc(0.2 + #{random(8)} * 0.1);
-      --drift: calc(-5 + #{random(10)});
-      animation-duration: calc(15s + #{random(30)}s);
-      animation-delay: calc(#{random(30)}s);
+      --opacity: calc(0.5 + #{random(5)} * 0.1);
+      --drift: calc(-10 + #{random(20)});
+      animation-duration: calc(10s + #{random(20)}s);
+      animation-delay: calc(#{random(10)}s);
     }
   }
   
@@ -245,12 +262,12 @@ body::after {
   .aurora-bg {
     position: fixed;
     inset: 0;
-    opacity: 0.4;
-    z-index: -1;
+    opacity: 0.55;
+    z-index: 2;
     overflow: hidden;
     pointer-events: none;
     background: 
-      linear-gradient(90deg, rgba(114, 80, 55, 0) 0%, rgba(114, 80, 55, 1) 50%, rgba(114, 80, 55, 0) 100%);
+      linear-gradient(90deg, rgba(138, 101, 73, 0) 0%, rgba(138, 101, 73, 1) 50%, rgba(138, 101, 73, 0) 100%);
     filter: blur(60px);
     transform: rotate(-20deg);
     transform-origin: center;
@@ -264,14 +281,14 @@ body::after {
     border-radius: 50%;
     background: linear-gradient(
       135deg, 
-      var(--brown-700) 0%, 
-      var(--brown-900) 50%,
-      var(--brown-800) 100%
+      var(--brown-600) 0%, 
+      var(--brown-800) 50%,
+      var(--brown-700) 100%
     );
     filter: blur(80px);
-    z-index: -1;
+    z-index: 3;
     pointer-events: none;
-    opacity: 0.15;
+    opacity: 0.25;
     animation: blob-float 30s ease-in-out infinite;
     will-change: transform, border-radius;
     transition: transform 0.3s ease-out;
@@ -307,20 +324,19 @@ body::after {
     top: 0;
     left: 0;
     width: 100%;
-    height: 100%;
-    z-index: -4;
-    overflow: hidden;
-    perspective: 1000px;
+    height: 100vh;
+    z-index: 1;
+    opacity: 0.95;
+    pointer-events: none;
   }
   
   .star {
     position: absolute;
-    background-color: white;
+    background-color: #fff;
     border-radius: 50%;
-    animation: star-twinkle infinite ease-in-out;
-    --base-opacity: 0.5;
-    will-change: opacity, transform;
-    transform-style: preserve-3d;
+    box-shadow: 0 0 3px 1px rgba(220, 210, 200, 0.6);
+    z-index: 1;
+    animation: star-twinkle 5s infinite ease-in-out;
   }
   
   /* Generate 200 stars with different properties */
@@ -466,22 +482,25 @@ body::after {
 @keyframes particle-animation {
   0% {
     transform: translateY(0) translateX(0);
-    opacity: 0;
-  }
-  5% {
-    opacity: 0;
+    opacity: var(--opacity);
   }
   10% {
+    opacity: var(--opacity);
+    transform: scale(1.3) translateY(10px);
+  }
+  30% {
+    transform: scale(1) translateY(calc(-30vh));
+  }
+  85% {
+    transform: scale(1) translateY(calc(-80vh));
     opacity: var(--opacity);
   }
   90% {
     opacity: var(--opacity);
-  }
-  95% {
-    opacity: 0;
+    transform: scale(1.2) translateY(calc(-90vh));
   }
   100% {
-    transform: translateY(calc(-100vh - 20px)) translateX(calc(var(--drift) * 80px));
+    transform: translateY(calc(-100vh - 50px)) translateX(calc(var(--drift) * 100px));
     opacity: 0;
   }
 }
@@ -552,25 +571,13 @@ body::after {
 }
 
 @keyframes star-twinkle {
-  0% {
+  0%, 100% {
     opacity: var(--base-opacity);
-    transform: scale(1) translateZ(0);
-  }
-  25% {
-    opacity: calc(var(--base-opacity) * 1.25);
-    transform: scale(1.05) translateZ(1px);
+    transform: scale(1);
   }
   50% {
     opacity: calc(var(--base-opacity) * 1.5);
-    transform: scale(1.1) translateZ(2px);
-  }
-  75% {
-    opacity: calc(var(--base-opacity) * 1.25);
-    transform: scale(1.05) translateZ(1px);
-  }
-  100% {
-    opacity: var(--base-opacity);
-    transform: scale(1) translateZ(0);
+    transform: scale(1.4);
   }
 }
 
@@ -643,11 +650,124 @@ a:not(.button-primary):not(.button-secondary):hover::after {
   100% { background-position: 0% 50%; }
 }
 
-/* Optimized performance for animations */
+/* Optimize animation performance with GPU acceleration */
 .animate-optimized {
   will-change: transform, opacity;
-  backface-visibility: hidden;
   transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+  -webkit-backface-visibility: hidden;
+  -webkit-perspective: 1000px;
+  -webkit-transform: translateZ(0);
+  transition: transform 0.1s linear;
+}
+
+/* Mobile optimizations for animations */
+@media (max-width: 768px) {
+  /* Reduce the number of particles and stars for mobile */
+  .stars-bg, .particles-container {
+    opacity: 0.6; /* Reduce overall opacity */
+  }
+  
+  /* Simplify animations by increasing duration (slower animations use less CPU) */
+  @keyframes mesh-animation {
+    0%, 100% {
+      transform: rotate(0deg) scale(1.2);
+      opacity: 0.03;
+    }
+    50% {
+      transform: rotate(0.5deg) scale(1.25);
+      opacity: 0.035;
+    }
+  }
+
+  @keyframes grain-animation {
+    0%, 100% {
+      transform: translate(0, 0) scale(1);
+    }
+    50% {
+      transform: translate(-1.5%, 1.5%) scale(1.005);
+    }
+  }
+
+  @keyframes aurora-flow {
+    0%, 100% {
+      transform: rotate(-20deg) translateY(0) scale(1);
+      opacity: 0.05;
+      filter: blur(60px);
+    }
+    50% {
+      transform: rotate(-21deg) translateY(0) scale(1.05);
+      opacity: 0.065;
+      filter: blur(65px);
+    }
+  }
+
+  @keyframes blob-float {
+    0%, 100% {
+      transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+      border-radius: 50%;
+    }
+    50% {
+      transform: translateY(-2%) translateX(2%) rotate(1deg) scale(1.03);
+      border-radius: 51% 49% 50.5% 49.5%;
+    }
+  }
+
+  /* Double all animation durations on mobile to reduce computational load */
+  .mesh-grid {
+    animation-duration: 360s;
+  }
+
+  .grain-overlay {
+    animation-duration: 24s;
+  }
+
+  .aurora-bg {
+    animation-duration: 50s;
+  }
+
+  .floating-blob {
+    animation-duration: 60s;
+  }
+
+  /* Reduce or disable certain animations on low-end mobile devices */
+  @media (max-width: 480px) {
+    /* Greatly simplify or disable the most intensive animations */
+    .grain-overlay {
+      opacity: 0.08;
+      animation: none; /* Disable animation entirely */
+      background-position: center center; /* Fix position */
+    }
+    
+    .mesh-grid {
+      opacity: 0.02;
+      animation-duration: 600s; /* Super slow animation, almost still */
+    }
+    
+    /* Reduce particles even further */
+    .particles-container {
+      opacity: 0.4;
+    }
+    
+    /* Simplify star animations */
+    @keyframes star-twinkle {
+      0%, 100% {
+        opacity: var(--base-opacity);
+      }
+      50% {
+        opacity: calc(var(--base-opacity) * 1.25);
+      }
+    }
+  }
+
+  /* Use simpler animations when device reports low battery */
+  @media (prefers-reduced-motion) {
+    .stars-bg, .particles-container, .aurora-bg, 
+    .mesh-grid, .grain-overlay, .floating-blob {
+      animation: none !important;
+    }
+  }
 }
 
 /* Reduced motion preference support */
@@ -673,4 +793,243 @@ a:not(.button-primary):not(.button-secondary):hover::after {
 :focus-visible {
   outline: 2px solid var(--brown-500);
   outline-offset: 2px;
+}
+
+/* Make particles more visible */
+.particles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 2;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.particle {
+  position: absolute;
+  background: linear-gradient(
+    135deg,
+    var(--brown-200) 0%,
+    var(--brown-300) 100%
+  );
+  box-shadow: 0 0 8px 2px rgba(214, 199, 184, 0.7);
+  border-radius: 50%;
+  opacity: 0;
+  animation-name: particle-animation;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation-iteration-count: infinite;
+  --drift: 0;
+  --opacity: 0.8;
+  will-change: transform, opacity;
+}
+
+/* Make aurora more visible */
+.aurora-bg {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  z-index: 1;
+  background: radial-gradient(
+    circle at 50% 0%,
+    rgba(161, 122, 92, 0.25) 0%,
+    rgba(125, 94, 70, 0.15) 25%,
+    rgba(86, 64, 46, 0.1) 50%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  filter: blur(30px);
+  opacity: 0.85;
+  animation: aurora-flow 25s infinite alternate;
+  pointer-events: none;
+}
+
+/* Make mesh grid more visible */
+.mesh-grid {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-image: 
+    linear-gradient(to right, rgba(186, 157, 127, 0.15) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(186, 157, 127, 0.15) 1px, transparent 1px);
+  background-size: 35px 35px;
+  z-index: 1;
+  opacity: 0.3;
+  animation: mesh-animation 50s infinite linear;
+  pointer-events: none;
+}
+
+/* Make floating blobs more visible */
+.floating-blob {
+  position: absolute;
+  width: 40vw;
+  height: 40vw;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at center,
+    rgba(161, 122, 92, 0.3) 0%,
+    rgba(138, 101, 73, 0.2) 40%,
+    rgba(92, 61, 42, 0.1) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  filter: blur(40px);
+  opacity: 0.6;
+  animation: blob-float 30s infinite ease-in-out;
+  pointer-events: none;
+}
+
+.floating-blob-1 {
+  top: 10%;
+  left: -10%;
+  background: radial-gradient(
+    circle at center,
+    rgba(176, 137, 107, 0.4) 0%,
+    rgba(158, 121, 93, 0.3) 40%,
+    rgba(114, 80, 55, 0.2) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  animation-delay: -5s;
+}
+
+.floating-blob-2 {
+  bottom: 5%;
+  right: -20%;
+  background: radial-gradient(
+    circle at center,
+    rgba(186, 147, 117, 0.35) 0%,
+    rgba(168, 131, 103, 0.25) 40%,
+    rgba(138, 101, 73, 0.15) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  animation-delay: -10s;
+}
+
+.floating-blob-3 {
+  top: -10%;
+  right: 5%;
+  background: radial-gradient(
+    circle at center,
+    rgba(196, 157, 127, 0.4) 0%,
+    rgba(178, 141, 113, 0.3) 40%,
+    rgba(148, 111, 83, 0.2) 70%,
+    rgba(0, 0, 0, 0) 100%
+  );
+  animation-delay: -15s;
+}
+
+/* Enhance grain overlay */
+.grain-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100vh;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.5 0'/%3E%3C/filter%3E%3Crect width='512' height='512' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+  z-index: 5;
+  opacity: 0.08;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: grain-animation 8s infinite steps(6);
+}
+
+/* Add explicit CSS rules for particles to ensure they're visible */
+.particle:nth-child(1) { width: 6px; height: 6px; top: 15vh; left: 25vw; animation-duration: 15s; animation-delay: 1s; }
+.particle:nth-child(2) { width: 8px; height: 8px; top: 35vh; left: 45vw; animation-duration: 18s; animation-delay: 2s; }
+.particle:nth-child(3) { width: 5px; height: 5px; top: 65vh; left: 15vw; animation-duration: 20s; animation-delay: 0s; }
+.particle:nth-child(4) { width: 7px; height: 7px; top: 85vh; left: 80vw; animation-duration: 25s; animation-delay: 3s; }
+.particle:nth-child(5) { width: 9px; height: 9px; top: 25vh; left: 60vw; animation-duration: 22s; animation-delay: 1.5s; }
+.particle:nth-child(6) { width: 6px; height: 6px; top: 45vh; left: 30vw; animation-duration: 19s; animation-delay: 2.5s; }
+.particle:nth-child(7) { width: 8px; height: 8px; top: 55vh; left: 75vw; animation-duration: 17s; animation-delay: 0.5s; }
+.particle:nth-child(8) { width: 7px; height: 7px; top: 30vh; left: 10vw; animation-duration: 21s; animation-delay: 3.5s; }
+.particle:nth-child(9) { width: 5px; height: 5px; top: 70vh; left: 50vw; animation-duration: 24s; animation-delay: 1s; }
+.particle:nth-child(10) { width: 9px; height: 9px; top: 40vh; left: 90vw; animation-duration: 16s; animation-delay: 2s; }
+.particle:nth-child(11) { width: 6px; height: 6px; top: 20vh; left: 40vw; animation-duration: 20s; animation-delay: 3s; }
+.particle:nth-child(12) { width: 8px; height: 8px; top: 60vh; left: 25vw; animation-duration: 22s; animation-delay: 1.5s; }
+.particle:nth-child(13) { width: 7px; height: 7px; top: 80vh; left: 65vw; animation-duration: 18s; animation-delay: 0.5s; }
+.particle:nth-child(14) { width: 5px; height: 5px; top: 10vh; left: 35vw; animation-duration: 25s; animation-delay: 2.5s; }
+.particle:nth-child(15) { width: 9px; height: 9px; top: 50vh; left: 85vw; animation-duration: 23s; animation-delay: 1s; }
+
+/* Add default opacity values for all particles */
+.particle {
+  position: absolute;
+  background: linear-gradient(
+    135deg,
+    var(--brown-200) 0%,
+    var(--brown-300) 100%
+  );
+  box-shadow: 0 0 8px 2px rgba(214, 199, 184, 0.7);
+  border-radius: 50%;
+  opacity: 0;
+  animation-name: particle-animation;
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+  animation-iteration-count: infinite;
+  --drift: 0;
+  --opacity: 0.8;
+  will-change: transform, opacity;
+}
+
+/* Particle opacity values for explicit particles */
+.particle:nth-child(1) { --opacity: 0.85; --drift: 5; }
+.particle:nth-child(2) { --opacity: 0.9; --drift: -3; }
+.particle:nth-child(3) { --opacity: 0.8; --drift: 7; }
+.particle:nth-child(4) { --opacity: 0.85; --drift: -5; }
+.particle:nth-child(5) { --opacity: 0.9; --drift: 2; }
+.particle:nth-child(6) { --opacity: 0.8; --drift: -7; }
+.particle:nth-child(7) { --opacity: 0.85; --drift: 4; }
+.particle:nth-child(8) { --opacity: 0.9; --drift: -2; }
+.particle:nth-child(9) { --opacity: 0.8; --drift: 6; }
+.particle:nth-child(10) { --opacity: 0.85; --drift: -4; }
+.particle:nth-child(11) { --opacity: 0.9; --drift: 3; }
+.particle:nth-child(12) { --opacity: 0.8; --drift: -6; }
+.particle:nth-child(13) { --opacity: 0.85; --drift: 1; }
+.particle:nth-child(14) { --opacity: 0.9; --drift: -8; }
+.particle:nth-child(15) { --opacity: 0.8; --drift: 5; }
+
+/* Add additional particles for more visibility */
+.particle:nth-child(16) { width: 7px; height: 7px; top: 18vh; left: 22vw; animation-duration: 17s; animation-delay: 2s; --opacity: 0.85; --drift: -6; }
+.particle:nth-child(17) { width: 8px; height: 8px; top: 42vh; left: 68vw; animation-duration: 19s; animation-delay: 1s; --opacity: 0.9; --drift: 4; }
+.particle:nth-child(18) { width: 6px; height: 6px; top: 75vh; left: 33vw; animation-duration: 21s; animation-delay: 0.5s; --opacity: 0.8; --drift: -5; }
+.particle:nth-child(19) { width: 9px; height: 9px; top: 22vh; left: 77vw; animation-duration: 23s; animation-delay: 1.5s; --opacity: 0.85; --drift: 7; }
+.particle:nth-child(20) { width: 7px; height: 7px; top: 58vh; left: 42vw; animation-duration: 20s; animation-delay: 2.5s; --opacity: 0.9; --drift: -3; }
+
+.brown-particles .particle {
+  /* Ensure particles are clearly visible with brown theme */
+  background: linear-gradient(
+    135deg,
+    var(--brown-300) 0%,
+    var(--brown-400) 100%
+  );
+  box-shadow: 0 0 12px 3px rgba(186, 147, 117, 0.8);
+  opacity: var(--opacity);
+}
+
+/* Make sure particles animate correctly */
+@keyframes particle-animation {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: var(--opacity);
+  }
+  10% {
+    opacity: var(--opacity);
+    transform: scale(1.3) translateY(10px);
+  }
+  30% {
+    transform: scale(1) translateY(calc(-30vh));
+  }
+  85% {
+    transform: scale(1) translateY(calc(-80vh));
+    opacity: var(--opacity);
+  }
+  90% {
+    opacity: var(--opacity);
+    transform: scale(1.2) translateY(calc(-90vh));
+  }
+  100% {
+    transform: translateY(calc(-100vh - 50px)) translateX(calc(var(--drift) * 100px));
+    opacity: 0;
+  }
 } 
