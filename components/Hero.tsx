@@ -16,7 +16,8 @@ import {
   AdaptiveDpr,
   AdaptiveEvents,
   BakeShadows,
-  PerformanceMonitor
+  PerformanceMonitor,
+  Stats
 } from '@react-three/drei'
 import { useRef, useState, useEffect, Suspense, useMemo, useCallback, memo } from 'react'
 import * as THREE from 'three'
@@ -210,210 +211,27 @@ function AnimatedShape() {
   )
 }
 
-function StarField() {
-  // Reduce star count for mobile
-  const { isMobile, isVisible, isLowPerformance } = useContext(AppContext)
-  const count = isMobile ? 1500 : 5000;
-  const [starData] = useState(() => {
-    const positions = new Float32Array(count * 3)
-    const colors = new Float32Array(count * 3)
-    const sizes = new Float32Array(count)
-    
-    for (let i = 0; i < count; i++) {
-      // Distribute stars in a sphere for more natural space feel
-      const radius = Math.random() * 50 + 10
-      const theta = Math.random() * Math.PI * 2
-      const phi = Math.acos((Math.random() * 2) - 1)
-      
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta)
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta)
-      positions[i * 3 + 2] = radius * Math.cos(phi)
-
-      // More natural color distribution
-      const temperature = Math.random()
-      if (temperature > 0.95) { // Blue-white hot stars (rare)
-        colors[i * 3] = 0.9
-        colors[i * 3 + 1] = 0.95
-        colors[i * 3 + 2] = 1
-      } else if (temperature > 0.8) { // Warm yellow stars
-        colors[i * 3] = 1
-        colors[i * 3 + 1] = 0.95
-        colors[i * 3 + 2] = 0.8
-      } else { // Common white stars
-        colors[i * 3] = 0.93
-        colors[i * 3 + 1] = 0.93
-        colors[i * 3 + 2] = 0.93
-      }
-
-      // More controlled size distribution
-      const sizeRoll = Math.random()
-      if (sizeRoll > 0.995) { // Very large stars (0.5%)
-        sizes[i] = 3.0 + Math.random() * 2.0
-      } else if (sizeRoll > 0.95) { // Medium stars (4.5%)
-        sizes[i] = 1.5 + Math.random() * 1.5
-      } else { // Small stars (95%)
-        sizes[i] = 0.1 + Math.random() * 0.5
-      }
-    }
-    return { positions, colors, sizes }
-  })
-
-  const pointsRef = useRef<THREE.Points>(null)
-  
-  useFrame((state) => {
-    // Only run animations if visible
-    if (!isVisible || !pointsRef.current) return
-    
-    // Reduce rotation speed on mobile
-    const rotationSpeed = isMobile ? 0.01 : 0.02;
-    pointsRef.current.rotation.y = state.clock.elapsedTime * rotationSpeed
-    if (pointsRef.current.material instanceof THREE.ShaderMaterial) {
-      pointsRef.current.material.uniforms.time.value = state.clock.elapsedTime
-    }
-  })
-
-  const uniforms = useMemo(() => ({
-    time: { value: 0 },
-    pixelRatio: { value: window.devicePixelRatio }
-  }), [])
-
-  return (
-    <points ref={pointsRef}>
-      <bufferGeometry>
-        <bufferAttribute
-          attach="attributes-position"
-          count={count}
-          array={starData.positions}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-color"
-          count={count}
-          array={starData.colors}
-          itemSize={3}
-        />
-        <bufferAttribute
-          attach="attributes-size"
-          count={count}
-          array={starData.sizes}
-          itemSize={1}
-        />
-      </bufferGeometry>
-      <shaderMaterial
-        transparent
-        depthWrite={false}
-        blending={THREE.AdditiveBlending}
-        vertexColors
-        uniforms={uniforms}
-        vertexShader={`
-          attribute float size;
-          varying vec3 vColor;
-          varying float vSize;
-          varying float vDistance;
-          uniform float time;
-          
-          void main() {
-            vColor = color;
-            vSize = size;
-            vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
-            vDistance = length(mvPosition.xyz);
-            gl_Position = projectionMatrix * mvPosition;
-            
-            // Smooth size falloff with distance
-            float distanceFactor = smoothstep(50.0, 5.0, vDistance);
-            float sizeScale = size * (0.5 + distanceFactor * 0.5);
-            
-            // Subtle twinkling based on size
-            float twinkle = 1.0 + sin(time * (1.0 + size) + size * 832.37) * 0.2;
-            
-            gl_PointSize = sizeScale * twinkle * 2.0;
-          }
-        `}
-        fragmentShader={`
-          varying vec3 vColor;
-          varying float vSize;
-          varying float vDistance;
-          uniform float time;
-          
-          float softCircle(vec2 uv, float radius) {
-            float d = length(uv);
-            float t = smoothstep(radius, radius * 0.9, d);
-            return t;
-          }
-          
-          void main() {
-            vec2 uv = gl_PointCoord * 2.0 - 1.0;
-            float d = length(uv);
-            
-            // Smooth circular base
-            float circle = softCircle(uv, 1.0);
-            
-            // Gaussian falloff for natural glow
-            float glow = exp(-d * d * 2.0);
-            
-            // Subtle ray effect based on size
-            float rays = max(0.0, 1.0 - abs(uv.x * uv.y * 8.0));
-            rays *= smoothstep(0.5, 1.5, vSize);
-            
-            // Combine effects
-            float brightness = circle * glow + rays * 0.3;
-            brightness *= smoothstep(50.0, 5.0, vDistance);
-            
-            // Apply color with intensity falloff
-            vec3 color = vColor * brightness;
-            
-            // HDR-like effect for bright stars
-            color += pow(color, vec3(2.0)) * smoothstep(1.0, 3.0, vSize);
-            
-            gl_FragColor = vec4(color, brightness);
-          }
-        `}
-      />
-    </points>
-  )
-}
-
-// Use throttling for touch handlers and animation frames
+// Replace RenderOptimizer component with enhanced version
 function RenderOptimizer() {
-  const { gl, scene, camera, viewport } = useThree()
+  const { gl, scene, camera } = useThree()
   const { isVisible, isMobile, isLowPerformance } = useContext(AppContext)
   
   useEffect(() => {
-    // Define animation function outside conditional blocks
-    function animate() {
-      gl.render(scene, camera);
-    }
-    
     // Apply mobile-specific optimizations
     if (isMobile) {
-      // Reduce pixel ratio for mobile
-      gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-      
-      // Disable antialiasing if performance is low
-      if (isLowPerformance) {
-        gl.setPixelRatio(1);
-      }
+      gl.setPixelRatio(Math.min(window.devicePixelRatio, isLowPerformance ? 1 : 1.5));
     }
     
-    // Only set up animation loop if visible
-    if (isVisible) {
-      // When becoming visible again, ensure we render at least once
+    // When not visible, render one final frame then stop
+    if (!isVisible) {
       gl.render(scene, camera);
-      
-      // Set up animation loop
-      gl.setAnimationLoop(animate);
-    } else {
-      // When not visible, stop animation loop but keep last frame
       gl.setAnimationLoop(null);
-      
-      // Render one final frame to ensure the scene is updated
-      gl.render(scene, camera);
     }
     
     return () => {
       gl.setAnimationLoop(null);
     };
-  }, [gl, isVisible, scene, camera, isMobile, isLowPerformance, viewport]);
+  }, [gl, isVisible, scene, camera, isMobile, isLowPerformance]);
   
   return null;
 }
@@ -439,6 +257,9 @@ const Scene = memo(function Scene() {
   
   return (
     <>
+      {/* Add Stats at the top */}
+      {process.env.NODE_ENV === 'development' && <Stats className="fps-monitor" />}
+      
       {/* Space environment */}
       <color attach="background" args={['#1a0f0a']} />
       <Environment preset="sunset" background blur={0.8} />
@@ -484,9 +305,6 @@ const Scene = memo(function Scene() {
       >
         <AnimatedShape />
       </Float>
-      
-      {/* Optimized background star field with realistic stars */}
-      <StarField />
       
       {/* Enhanced brown nebula effects - reduced for mobile */}
       <Sparkles
@@ -669,7 +487,7 @@ export default memo(function Hero() {
               powerPreference: "high-performance",
             }}
             dpr={[0.6, isLowPerformance ? 1 : 2]} // Lower resolution on mobile
-            frameloop={isVisible ? "always" : "demand"} // Only run frame loop when visible
+            frameloop={isVisible ? "always" : "never"} // Stop frame loop when not visible
             performance={{ min: 0.1 }} // Allow very low performance
             onCreated={(state) => {
               // Force a lower pixel ratio on mobile

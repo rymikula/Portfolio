@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { lazy, Suspense } from 'react'
 import dynamic from 'next/dynamic'
 import { motion } from 'framer-motion'
+import { OptimizedParticles } from './components/OptimizedParticles'
 
 // Dynamic components for better performance
 const Hero = dynamic(() => import('../components/Hero'), { 
@@ -32,15 +33,13 @@ export default function Home() {
   const [reduceAnimations, setReduceAnimations] = useState(false)
   const [fps, setFps] = useState(60)
   
-  // Memoize counts to prevent unnecessary re-renders - increase particle count
-  const { starCount, particleCount } = useMemo(() => ({
-    starCount: isMobile ? (isLowPerformance ? 80 : 150) : 300,
-    particleCount: isMobile ? (isLowPerformance ? 30 : 60) : 120
+  // Memoize counts to prevent unnecessary re-renders
+  const { starCount } = useMemo(() => ({
+    starCount: isMobile ? (isLowPerformance ? 80 : 150) : 300
   }), [isMobile, isLowPerformance])
   
   // Memoize arrays to prevent regeneration on each render
   const starArray = useMemo(() => [...Array(starCount)], [starCount])
-  const particleArray = useMemo(() => [...Array(particleCount)], [particleCount])
   
   useEffect(() => {
     // Set viewport height
@@ -128,20 +127,18 @@ export default function Home() {
   
   return (
     <main className={`relative min-h-screen overflow-hidden ${reduceAnimations ? 'reduce-animations' : ''}`}>
-      {/* Enhanced Global background elements with conditional rendering */}
+      {/* Background elements */}
       <div className="stars-bg animate-optimized">
         {starArray.map((_, i) => (
           <div key={i} className="star" />
         ))}
       </div>
-      <div className="particles-container animate-optimized brown-particles">
-        {particleArray.map((_, i) => (
-          <div key={i} className="particle" />
-        ))}
-      </div>
       
-      {/* Conditionally render certain effects on mobile */}
-      <div className="aurora-bg animate-optimized" />
+      {/* Use the OptimizedParticles component for particle effects */}
+      <OptimizedParticles />
+      
+      {/* Rest of the background elements */}
+      <div className="aurora-bg animate-optimized essential-animations" />
       <div className="mesh-grid animate-optimized" />
       
       {/* Skip grain overlay on low performance devices */}

@@ -1183,4 +1183,309 @@ a:not(.button-primary):not(.button-secondary):hover::after {
   -webkit-backface-visibility: hidden;
   -webkit-perspective: 1000px;
   -webkit-transform: translateZ(0);
+}
+
+/* Add will-change for hardware acceleration on key animated elements */
+.particle,
+.aurora-bg,
+.floating-blob,
+.mesh-grid,
+.grain-overlay {
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+/* Throttle animations by reducing repaints */
+@media (min-width: 769px) {
+  .animate-optimized {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    contain: paint;
+  }
+}
+
+/* Optimize particles for better performance */
+.particles-container {
+  contain: strict;
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Reduce particle count on scroll */
+.scroll-active .particles-container {
+  contain: layout style;
+}
+
+/* Modify media queries to restore animations on mobile while optimizing */
+@media (max-width: 768px) {
+  .stars-bg {
+    display: block !important;
+    opacity: 0.5;
+    contain: strict;
+  }
+  
+  .particles-container {
+    display: block !important;
+    opacity: 0.7;
+    contain: strict;
+  }
+  
+  .aurora-bg {
+    display: block !important;
+    opacity: 0.6;
+    contain: layout style;
+  }
+  
+  .floating-blob {
+    display: block !important;
+    opacity: 0.5;
+    transform: scale(0.7);
+    filter: blur(8px);
+    contain: layout style;
+  }
+
+  /* Optimize mobile animations */
+  @keyframes mesh-animation {
+    0%, 100% {
+      transform: translateZ(0) rotate(0deg) scale(1.05);
+      opacity: 0.7;
+    }
+    50% {
+      transform: translateZ(0) rotate(1deg) scale(1);
+      opacity: 0.8;
+    }
+  }
+}
+
+/* Add scroll performance optimizations */
+@media (prefers-reduced-motion: no-preference) {
+  html.optimize-animations * {
+    animation-play-state: paused;
+  }
+  
+  html.optimize-animations .essential-animations {
+    animation-play-state: running;
+  }
+}
+
+/* Fix for the laggy scroll - add these at the bottom of the file */
+.reduce-animations .particle {
+  animation-duration: 60s !important; /* Slow down particles */
+  animation-timing-function: linear !important;
+}
+
+.reduce-animations .mesh-grid,
+.reduce-animations .grain-overlay,
+.reduce-animations .aurora-bg,
+.reduce-animations .floating-blob {
+  animation-duration: 30s !important;
+  animation-timing-function: linear !important;
+}
+
+/* Reduce number of active particles during scroll */
+.scroll-active .particle:nth-child(even) {
+  opacity: 0 !important;
+  transition: opacity 0.5s ease;
+}
+
+.scroll-active .particle:nth-child(3n+1) {
+  animation-play-state: paused;
+}
+
+/* JS helper class - will be added by our script */
+.scroll-active .non-essential-animation {
+  animation-play-state: paused;
+}
+
+/* Particle loading and initialization */
+.particles-initializing {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.particles-loaded {
+  opacity: 1;
+  transition: opacity 0.5s ease-in;
+}
+
+/* Fixed particle handling - read drift from data attribute */
+.particle {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(45deg, var(--brown-300), var(--brown-400));
+  opacity: 0.8;
+  animation: particle-animation 15s linear infinite;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+}
+
+/* Use a more stable animation with consistent endpoints */
+@keyframes particle-animation {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: var(--opacity, 0.8);
+  }
+  25% {
+    transform: translateY(calc(-25vh)) translateX(calc(var(--drift, 0) * 20px));
+    opacity: var(--opacity, 0.8);
+  }
+  50% {
+    transform: translateY(calc(-50vh)) translateX(calc(var(--drift, 0) * 40px));
+    opacity: var(--opacity, 0.8);
+  }
+  75% {
+    transform: translateY(calc(-75vh)) translateX(calc(var(--drift, 0) * 60px));
+    opacity: var(--opacity, 0.8);
+  }
+  100% {
+    transform: translateY(calc(-100vh)) translateX(calc(var(--drift, 0) * 80px));
+    opacity: 0;
+  }
+}
+
+/* Use data-drift attributes for particles */
+.particle[data-drift="-5"] { --drift: -5; }
+.particle[data-drift="-4"] { --drift: -4; }
+.particle[data-drift="-3"] { --drift: -3; }
+.particle[data-drift="-2"] { --drift: -2; }
+.particle[data-drift="-1"] { --drift: -1; }
+.particle[data-drift="0"] { --drift: 0; }
+.particle[data-drift="1"] { --drift: 1; }
+.particle[data-drift="2"] { --drift: 2; }
+.particle[data-drift="3"] { --drift: 3; }
+.particle[data-drift="4"] { --drift: 4; }
+.particle[data-drift="5"] { --drift: 5; }
+
+/* Optimized particle container with less aggressive containment */
+.particles-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  z-index: -1;
+  pointer-events: none;
+  contain: layout paint size;
+}
+
+/* Special particles for mobile - keeps them visible but optimized */
+@media (max-width: 768px) {
+  .particles-container {
+    display: block !important;
+    opacity: 0.8;
+    contain: layout paint;
+  }
+  
+  .particle {
+    animation-duration: 20s;
+  }
+}
+
+/* Less aggressive scroll optimizations */
+.scroll-active .particles-container {
+  contain: layout paint;
+}
+
+.scroll-active .particle {
+  will-change: transform;
+}
+
+/* Instead of turning off particles, just slow them down during scroll */
+.scroll-active .particle {
+  animation-duration: 30s !important;
+}
+
+/* Remove the particle hiding - this was causing teleporting effects */
+.scroll-active .particle:nth-child(even) {
+  opacity: var(--opacity, 0.8) !important;
+}
+
+.scroll-active .particle:nth-child(3n+1) {
+  animation-play-state: running !important;
+}
+
+/* Disable aggressive animation pausing */
+.scroll-active .non-essential-animation {
+  animation-play-state: running !important;
+}
+
+/* Adjustments for reduce-animations mode */
+.reduce-animations .particle {
+  animation-duration: 30s !important;
+  animation-timing-function: linear !important;
+}
+
+/* Disable the custom IntersectionObserver that's pausing particles */
+html.optimize-animations .particles-container {
+  animation-play-state: running !important;
+}
+
+html.optimize-animations .particle {
+  animation-play-state: running !important;
+}
+
+/* Fix for teleporting particles and browser optimization */
+@media (min-width: 769px) {
+  .animate-optimized {
+    transform: translateZ(0);
+    will-change: transform;
+    backface-visibility: hidden;
+    contain: paint;
+  }
+}
+
+/* Ensure particles render fully before animating */
+.particle {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 10px;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* Ensure viewport recalculation happens properly */
+@media (orientation: portrait), (orientation: landscape) {
+  html, body {
+    height: 100%;
+    overscroll-behavior-y: none;
+  }
+  
+  .particles-container {
+    height: 100vh;
+    height: calc(var(--vh, 1vh) * 100);
+  }
+}
+
+/* Fix smooth scrolling issues that might cause jank */
+html.is-scrolling {
+  scroll-behavior: auto !important;
+}
+
+/* Ensure smooth transforms */
+.particle, .stars-bg, .aurora-bg, .floating-blob {
+  transform-style: flat;
+}
+
+/* Better timing functions for animations */
+.particle {
+  animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1) !important;
+}
+
+/* Ensure mobile animations aren't cut off */
+@media (max-width: 768px) {
+  @keyframes particle-animation {
+    0% {
+      transform: translateY(0) translateX(0);
+      opacity: var(--opacity, 0.8);
+    }
+    80% {
+      transform: translateY(calc(-80vh)) translateX(calc(var(--drift, 0) * 30px));
+      opacity: var(--opacity, 0.8);
+    }
+    100% {
+      transform: translateY(calc(-100vh - 20px)) translateX(calc(var(--drift, 0) * 40px));
+      opacity: 0;
+    }
+  }
 } 
