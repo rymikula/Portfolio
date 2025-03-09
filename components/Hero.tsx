@@ -1,6 +1,6 @@
 'use client'
 
-import { Canvas, useFrame, extend } from '@react-three/fiber'
+import { Canvas, useFrame, extend, useThree } from '@react-three/fiber'
 import {
   OrbitControls,
   Stars,
@@ -17,6 +17,11 @@ import {
 import { useRef, useState, useEffect, Suspense, useMemo } from 'react'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
+
+// Create a context to share visibility state
+import { createContext, useContext } from 'react'
+
+const VisibilityContext = createContext({ isVisible: true })
 
 function SpaceSkybox() {
   return (
@@ -41,8 +46,12 @@ function SpaceSkybox() {
 function AnimatedShape() {
   const mainMeshRef = useRef<THREE.Mesh>(null)
   const sphereRefs = useRef<(THREE.Mesh | null)[]>([])
+  const { isVisible } = useContext(VisibilityContext)
 
   useFrame((state, delta) => {
+    // Only run animations if visible
+    if (!isVisible) return
+    
     if (mainMeshRef.current) {
       mainMeshRef.current.rotation.x = Math.sin(state.clock.elapsedTime) * 0.2
       mainMeshRef.current.rotation.y += delta * 0.3
@@ -207,13 +216,15 @@ function StarField() {
   })
 
   const pointsRef = useRef<THREE.Points>(null)
+  const { isVisible } = useContext(VisibilityContext)
   
   useFrame((state) => {
-    if (pointsRef.current) {
-      pointsRef.current.rotation.y = state.clock.elapsedTime * 0.02
-      if (pointsRef.current.material instanceof THREE.ShaderMaterial) {
-        pointsRef.current.material.uniforms.time.value = state.clock.elapsedTime
-      }
+    // Only run animations if visible
+    if (!isVisible || !pointsRef.current) return
+    
+    pointsRef.current.rotation.y = state.clock.elapsedTime * 0.02
+    if (pointsRef.current.material instanceof THREE.ShaderMaterial) {
+      pointsRef.current.material.uniforms.time.value = state.clock.elapsedTime
     }
   })
 
@@ -318,13 +329,55 @@ function StarField() {
   )
 }
 
+// Optimization component to pause/resume rendering
+function RenderOptimizer() {
+  const { gl, scene, camera } = useThree()
+  const { isVisible } = useContext(VisibilityContext)
+  
+  useEffect(() => {
+    // Define animation function outside conditional blocks
+    function animate() {
+      gl.render(scene, camera);
+    }
+    
+    // Only set up animation loop if visible
+    if (isVisible) {
+      // When becoming visible again, ensure we render at least once
+      gl.render(scene, camera);
+      
+      // Set up animation loop
+      gl.setAnimationLoop(animate);
+    } else {
+      // When not visible, stop animation loop but keep last frame
+      gl.setAnimationLoop(null);
+      
+      // Render one final frame to ensure the scene is updated
+      gl.render(scene, camera);
+    }
+    
+    return () => {
+      gl.setAnimationLoop(null);
+    };
+  }, [gl, isVisible, scene, camera]);
+  
+  return null;
+}
+
 function Scene() {
+  const { isVisible } = useContext(VisibilityContext)
+  
+  // Modify OrbitControls to respect visibility
+  const autoRotateSpeed = isVisible ? 0.6 : 0 // Stop auto-rotation when not visible
+  
   return (
     <>
       {/* Space environment */}
       <color attach="background" args={['#1a0f0a']} />
       <Environment preset="sunset" background blur={0.8} />
       <fog attach="fog" args={['#1a0f0a', 15, 35]} />
+      
+      {/* Add render optimizer */}
+      <RenderOptimizer />
       
       {/* Enhanced base lighting */}
       <ambientLight intensity={0.25} color="#3d2317" />
@@ -388,8 +441,8 @@ function Scene() {
         enablePan={false}
         minPolarAngle={Math.PI / 2.5}
         maxPolarAngle={Math.PI / 1.5}
-        autoRotate
-        autoRotateSpeed={0.6}
+        autoRotate={isVisible}
+        autoRotateSpeed={autoRotateSpeed}
         target={[0, 0, 0]}
         makeDefault
         enableDamping
@@ -413,6 +466,9 @@ export default function Hero() {
   const [scrollY, setScrollY] = useState(0);
   const scrollThreshold = 100; // Hide indicator after scrolling 100px
   const [isMobile, setIsMobile] = useState(false);
+  // Add state for visibility
+  const [isVisible, setIsVisible] = useState(true);
+  const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -448,6 +504,26 @@ export default function Hero() {
       setScrollY(window.scrollY);
     };
     
+    // Set up Intersection Observer to detect visibility
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const [entry] = entries;
+        setIsVisible(entry.isIntersecting);
+        console.log("Hero section visibility:", entry.isIntersecting);
+      },
+      {
+        // Trigger when at least 10% of the element is visible
+        threshold: 0.1,
+        // Start observing slightly before the element comes into view
+        rootMargin: "100px 0px" 
+      }
+    );
+    
+    // Start observing
+    if (heroRef.current) {
+      observer.observe(heroRef.current);
+    }
+    
     // Add event listeners
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('scroll', handleScroll);
@@ -457,6 +533,11 @@ export default function Hero() {
       document.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('resize', checkMobile);
+      
+      // Clean up observer
+      if (heroRef.current) {
+        observer.unobserve(heroRef.current);
+      }
     };
   }, []);
 
@@ -470,116 +551,120 @@ export default function Hero() {
   };
 
   return (
-    <div className="relative h-screen w-full bg-[#1a0f0a] z-20 overflow-hidden">
-      {/* 3D Scene Container */}
-      <div className="absolute inset-0 overflow-hidden" style={{ touchAction: 'pan-y pinch-zoom' }}>
-        <Canvas
-          camera={{
-            position: [0, 0, 8],
-            fov: 45,
-            near: 0.1,
-            far: 1000
-          }}
-          gl={{
-            antialias: true,
-            toneMapping: THREE.ACESFilmicToneMapping,
-            outputColorSpace: THREE.SRGBColorSpace
-          }}
-          onCreated={() => {
-            setTimeout(() => setSceneReady(true), 500);
-          }}
-          className="touch-auto"
-        >
-          <Suspense fallback={null}>
-            <Scene />
-          </Suspense>
-        </Canvas>
-      </div>
-
-      {/* Loading Screen */}
-      {!sceneReady && <Loader />}
-
-      {/* Text Overlay */}
-      <div 
-        className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${
-          sceneReady ? 'opacity-100' : 'opacity-0'
-        }`}
-      >
-        {/* Gradient overlay with pointer-events-none */}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/50 pointer-events-none" />
-        
-        {/* Center content container */}
-        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className={`text-center ${isMobile ? 'pointer-events-auto' : 'pointer-events-none'}`}>
-            <motion.h1
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: sceneReady ? 1 : 0, y: sceneReady ? 0 : 20 }}
-              transition={{ duration: 0.8, delay: 0.3 }}
-              className="mb-6 text-7xl font-bold text-white drop-shadow-2xl [text-shadow:_0_4px_24px_rgba(0,0,0,1)] pointer-events-none"
-            >
-              Ryan Mikula
-            </motion.h1>
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: sceneReady ? 1 : 0, y: sceneReady ? 0 : 20 }}
-              transition={{ duration: 0.8, delay: 0.5 }}
-              className="text-2xl font-light text-gray-200 drop-shadow-2xl [text-shadow:_0_4px_24px_rgba(0,0,0,1)] pointer-events-none mb-6"
-            >
-              Incoming Software Engineer & Computer Science Graduate Student
-            </motion.p>
-            
-            {/* Mobile button positioned directly under the text */}
-            {isMobile && (
-              <motion.div 
-                className="mt-8 z-50 flex justify-center"
-                initial={{ opacity: 0 }}
-                animate={{ 
-                  opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
-                  y: sceneReady ? 0 : 20
-                }}
-                transition={{ duration: 0.8, delay: 0.7 }}
-              >
-                <button 
-                  onClick={scrollPastHero}
-                  className="bg-white/20 backdrop-blur-sm px-6 py-2 rounded-full border border-white/50 text-white font-medium shadow-lg hover:bg-white/30 transition-all pointer-events-auto"
-                >
-                  Explore More
-                </button>
-              </motion.div>
-            )}
-          </div>
-        </div>
-        
-        {/* Scroll indicator (desktop only) */}
-        {!isMobile && (
-          <motion.div 
-            className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none"
-            initial={{ opacity: 0 }}
-            animate={{ 
-              opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
-              y: scrollY < scrollThreshold ? 0 : 20
+    <div ref={heroRef} className="relative h-screen w-full bg-[#1a0f0a] z-20 overflow-hidden">
+      {/* Provide visibility context to Three.js components */}
+      <VisibilityContext.Provider value={{ isVisible }}>
+        {/* 3D Scene Container */}
+        <div className="absolute inset-0 overflow-hidden" style={{ touchAction: 'pan-y pinch-zoom' }}>
+          {/* Always render Canvas, no conditional rendering */}
+          <Canvas
+            camera={{
+              position: [0, 0, 8],
+              fov: 45,
+              near: 0.1,
+              far: 1000
             }}
-            transition={{ duration: 0.3 }}
+            gl={{
+              antialias: true,
+              toneMapping: THREE.ACESFilmicToneMapping,
+              outputColorSpace: THREE.SRGBColorSpace
+            }}
+            onCreated={() => {
+              setTimeout(() => setSceneReady(true), 500);
+            }}
+            className="touch-auto"
           >
-            <div className="flex flex-col items-center">
-              <p className="text-white text-sm mb-2">Scroll Down</p>
-              <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center p-1">
+            <Suspense fallback={null}>
+              <Scene />
+            </Suspense>
+          </Canvas>
+        </div>
+
+        {/* Loading Screen */}
+        {!sceneReady && <Loader />}
+
+        {/* Text Overlay */}
+        <div 
+          className={`absolute inset-0 pointer-events-none transition-opacity duration-1000 ${
+            sceneReady ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {/* Gradient overlay with pointer-events-none */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-black/50 pointer-events-none" />
+          
+          {/* Center content container */}
+          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div className={`text-center ${isMobile ? 'pointer-events-auto' : 'pointer-events-none'}`}>
+              <motion.h1
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: sceneReady ? 1 : 0, y: sceneReady ? 0 : 20 }}
+                transition={{ duration: 0.8, delay: 0.3 }}
+                className="mb-6 text-7xl font-bold text-white drop-shadow-2xl [text-shadow:_0_4px_24px_rgba(0,0,0,1)] pointer-events-none"
+              >
+                Ryan Mikula
+              </motion.h1>
+              <motion.p
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: sceneReady ? 1 : 0, y: sceneReady ? 0 : 20 }}
+                transition={{ duration: 0.8, delay: 0.5 }}
+                className="text-2xl font-light text-gray-200 drop-shadow-2xl [text-shadow:_0_4px_24px_rgba(0,0,0,1)] pointer-events-none mb-6"
+              >
+                Incoming Software Engineer & Computer Science Graduate Student
+              </motion.p>
+              
+              {/* Mobile button positioned directly under the text */}
+              {isMobile && (
                 <motion.div 
-                  className="w-1 h-2 bg-white rounded-full"
+                  className="mt-8 z-50 flex justify-center"
+                  initial={{ opacity: 0 }}
                   animate={{ 
-                    y: [0, 6, 0],
+                    opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
+                    y: sceneReady ? 0 : 20
                   }}
-                  transition={{ 
-                    repeat: Infinity, 
-                    duration: 1.5,
-                    ease: "easeInOut"
-                  }}
-                />
-              </div>
+                  transition={{ duration: 0.8, delay: 0.7 }}
+                >
+                  <button 
+                    onClick={scrollPastHero}
+                    className="bg-white/20 backdrop-blur-sm px-6 py-2 rounded-full border border-white/50 text-white font-medium shadow-lg hover:bg-white/30 transition-all pointer-events-auto"
+                  >
+                    Explore More
+                  </button>
+                </motion.div>
+              )}
             </div>
-          </motion.div>
-        )}
-      </div>
+          </div>
+          
+          {/* Scroll indicator (desktop only) */}
+          {!isMobile && (
+            <motion.div 
+              className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ 
+                opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
+                y: scrollY < scrollThreshold ? 0 : 20
+              }}
+              transition={{ duration: 0.3 }}
+            >
+              <div className="flex flex-col items-center">
+                <p className="text-white text-sm mb-2">Scroll Down</p>
+                <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center p-1">
+                  <motion.div 
+                    className="w-1 h-2 bg-white rounded-full"
+                    animate={{ 
+                      y: [0, 6, 0],
+                    }}
+                    transition={{ 
+                      repeat: Infinity, 
+                      duration: 1.5,
+                      ease: "easeInOut"
+                    }}
+                  />
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </VisibilityContext.Provider>
     </div>
   )
 } 
