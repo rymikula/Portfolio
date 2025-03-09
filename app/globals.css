@@ -1,0 +1,676 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brown-50: #f9f6f3;
+  --brown-100: #e8e0d8;
+  --brown-200: #d6c7b8;
+  --brown-300: #c4ad99;
+  --brown-400: #b2937a;
+  --brown-500: #a17a5c;
+  --brown-600: #8a6549;
+  --brown-700: #725037;
+  --brown-800: #5c3d2a;
+  --brown-900: #432b1d;
+  
+  --gray-50: #f9f9fa;
+  --gray-100: #f0f0f2;
+  --gray-200: #e4e5e7;
+  --gray-300: #d5d6da;
+  --gray-400: #b9bcc0;
+  --gray-500: #9ca0a6;
+  --gray-600: #7f838a;
+  --gray-700: #62656c;
+  --gray-800: #43454b;
+  --gray-900: #27282c;
+  --gray-950: #18191b;
+  
+  --cream-50: #fefefe;
+  --cream-100: #fcfbf9;
+  --cream-200: #f7f5ef;
+  --cream-300: #f1ede3;
+  --cream-400: #e6dfd1;
+  --cream-500: #dcd2be;
+  --cream-600: #c2b9a6;
+  --cream-700: #a89e8c;
+  --cream-800: #857c6c;
+  --cream-900: #5e5849;
+}
+
+/* Enhanced base styling */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 2rem;
+  overflow-x: hidden;
+}
+
+body {
+  min-height: 100vh;
+  color: var(--gray-100);
+  background-color: var(--gray-950);
+  position: relative;
+  font-feature-settings: "salt", "ss01";
+  overflow-x: hidden;
+}
+
+/* Dynamic animated noise texture base */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -10%;
+  width: 120%;
+  height: 120%;
+  z-index: -5;
+  background-image: url('/noise.svg');
+  background-repeat: repeat;
+  background-size: 200px 200px;
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  animation: noise-shift 120s linear infinite;
+}
+
+/* Animated gradient background */
+body::after {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: -6;
+  background: 
+    radial-gradient(ellipse at 25% 25%, rgba(114, 80, 55, 0.15) 0%, rgba(24, 25, 27, 0) 70%),
+    radial-gradient(ellipse at 75% 75%, rgba(92, 61, 42, 0.1) 0%, rgba(24, 25, 27, 0) 70%);
+  background-size: 200% 200%;
+  animation: gradient-shift 30s ease infinite alternate;
+  pointer-events: none;
+}
+
+@layer base {
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-bold;
+  }
+}
+
+@layer components {
+  .container-section {
+    @apply max-w-7xl mx-auto px-5 sm:px-8 lg:px-12 py-20 md:py-28;
+    position: relative;
+    z-index: 5;
+  }
+  
+  .heading-xl {
+    @apply font-heading text-4xl md:text-5xl lg:text-6xl font-bold text-cream-100 leading-tight tracking-tight;
+  }
+  
+  .heading-lg {
+    @apply font-heading text-3xl md:text-4xl font-bold text-cream-100 leading-tight;
+  }
+  
+  .heading-md {
+    @apply font-heading text-2xl md:text-3xl font-semibold text-cream-100 leading-tight;
+  }
+  
+  .button-primary {
+    @apply px-6 py-3 bg-brown-600 text-cream-100 rounded-md transition-all hover:bg-brown-500 focus:ring-2 focus:ring-brown-500 focus:ring-opacity-50 inline-block;
+  }
+  
+  .button-secondary {
+    @apply px-6 py-3 bg-transparent border border-brown-500 text-brown-400 rounded-md transition-all hover:bg-brown-900/40 hover:text-brown-300 focus:ring-2 focus:ring-brown-500 focus:ring-opacity-50 inline-block;
+  }
+
+  .gradient-bg {
+    @apply bg-gradient-to-r from-brown-700 via-brown-800 to-gray-800 bg-size-200 animate-gradient;
+  }
+
+  .card {
+    @apply rounded-lg bg-gray-900/70 backdrop-blur-sm border border-gray-800 transition-all hover:border-brown-800 hover:shadow-lg hover:shadow-brown-900/20;
+    position: relative;
+    z-index: 5;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease, background-color 0.3s ease;
+  }
+
+  /* Content section styling */
+  .content-section {
+    position: relative;
+    z-index: 5;
+  }
+
+  /* Enhanced section styling */
+  section {
+    position: relative;
+    z-index: 1;
+    padding: 1px 0;
+    margin: 0;
+    isolation: isolate;
+  }
+
+  /* Rich animated backgrounds for sections with texture */
+  section {
+    position: relative;
+    background-color: transparent;
+  }
+
+  /* Animated mesh background for sections */
+  .mesh-grid {
+    position: absolute;
+    inset: -50% -50%;
+    width: 200%;
+    height: 200%;
+    z-index: -2;
+    pointer-events: none;
+    background-size: 40px 40px;
+    background-image:
+      linear-gradient(to right, rgba(100, 80, 60, 0.03) 1px, transparent 1px),
+      linear-gradient(to bottom, rgba(100, 80, 60, 0.03) 1px, transparent 1px);
+    mask-image: radial-gradient(ellipse at center, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 70%);
+    transform-origin: center;
+    animation: mesh-animation 180s linear infinite;
+    will-change: transform, opacity;
+  }
+  
+  /* Animated grain texture */
+  .grain-overlay {
+    position: absolute;
+    inset: -20%;
+    width: 140%;
+    height: 140%;
+    z-index: 1;
+    opacity: 0.12;
+    pointer-events: none;
+    background-image: url('/noise.svg');
+    background-repeat: repeat;
+    background-size: 150px 150px;
+    mix-blend-mode: overlay;
+    animation: grain-animation 12s steps(8) infinite;
+    will-change: transform;
+  }
+  
+  /* Dynamic particle system */
+  .particles-container {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    opacity: 0.8;
+    pointer-events: none;
+  }
+  
+  .particle {
+    position: absolute;
+    background-color: var(--cream-100);
+    border-radius: 50%;
+    opacity: 0;
+    animation-name: particle-animation;
+    animation-timing-function: cubic-bezier(0.25, 0.1, 0.25, 1);
+    animation-iteration-count: infinite;
+    --drift: 0;
+    --opacity: 0.5;
+    will-change: transform, opacity;
+  }
+  
+  /* Create 50 unique particles with different positions, sizes, and animation durations */
+  @for $i from 1 through 50 {
+    .particle:nth-child(#{$i}) {
+      width: calc(1px + #{random(4)}px);
+      height: calc(1px + #{random(4)}px);
+      top: calc(#{random(100)}vh);
+      left: calc(#{random(100)}vw);
+      --opacity: calc(0.2 + #{random(8)} * 0.1);
+      --drift: calc(-5 + #{random(10)});
+      animation-duration: calc(15s + #{random(30)}s);
+      animation-delay: calc(#{random(30)}s);
+    }
+  }
+  
+  /* Animated background gradient for sections */
+  .section-bg-gradient {
+    position: absolute;
+    inset: -100px;
+    z-index: -1;
+    overflow: hidden;
+    background: linear-gradient(
+      45deg,
+      rgba(67, 43, 29, 0.05) 0%,
+      rgba(24, 25, 27, 0) 50%,
+      rgba(67, 43, 29, 0.08) 100%
+    );
+    background-size: 400% 400%;
+    animation: gradient-flow 15s ease infinite alternate;
+  }
+  
+  /* Subtle aurora effect */
+  .aurora-bg {
+    position: fixed;
+    inset: 0;
+    opacity: 0.4;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+    background: 
+      linear-gradient(90deg, rgba(114, 80, 55, 0) 0%, rgba(114, 80, 55, 1) 50%, rgba(114, 80, 55, 0) 100%);
+    filter: blur(60px);
+    transform: rotate(-20deg);
+    transform-origin: center;
+    animation: aurora-flow 25s ease-in-out infinite alternate;
+    will-change: transform, opacity, filter;
+  }
+  
+  /* Animated floating blobs */
+  .floating-blob {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(
+      135deg, 
+      var(--brown-700) 0%, 
+      var(--brown-900) 50%,
+      var(--brown-800) 100%
+    );
+    filter: blur(80px);
+    z-index: -1;
+    pointer-events: none;
+    opacity: 0.15;
+    animation: blob-float 30s ease-in-out infinite;
+    will-change: transform, border-radius;
+    transition: transform 0.3s ease-out;
+  }
+  
+  .floating-blob-1 {
+    width: 40vw;
+    height: 40vw;
+    top: 0;
+    left: 0;
+    animation-delay: 0s;
+  }
+  
+  .floating-blob-2 {
+    width: 30vw;
+    height: 30vw;
+    bottom: 0;
+    right: 0;
+    animation-delay: -5s;
+  }
+  
+  .floating-blob-3 {
+    width: 25vw;
+    height: 25vw;
+    top: 40%;
+    left: 60%;
+    animation-delay: -10s;
+  }
+  
+  /* Moving stars/particles */
+  .stars-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -4;
+    overflow: hidden;
+    perspective: 1000px;
+  }
+  
+  .star {
+    position: absolute;
+    background-color: white;
+    border-radius: 50%;
+    animation: star-twinkle infinite ease-in-out;
+    --base-opacity: 0.5;
+    will-change: opacity, transform;
+    transform-style: preserve-3d;
+  }
+  
+  /* Generate 200 stars with different properties */
+  @for $i from 1 through 200 {
+    .star:nth-child(#{$i}) {
+      top: calc(#{random(100)}vh);
+      left: calc(#{random(100)}vw);
+      width: calc(#{random(3)}px);
+      height: calc(#{random(3)}px);
+      --base-opacity: calc(0.2 + #{random(8)} * 0.1);
+      animation-duration: calc(2s + #{random(5)}s);
+      animation-delay: calc(#{random(5)}s);
+    }
+  }
+}
+
+@layer utilities {
+  .bg-size-200 {
+    background-size: 200% 200%;
+  }
+
+  .glass-effect {
+    @apply backdrop-blur-sm bg-gray-900/60 border border-gray-800/50;
+  }
+
+  .text-shadow {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .text-gradient {
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-brown-300 to-cream-200;
+  }
+  
+  .skill-tag {
+    @apply px-5 py-3 rounded-lg text-center transition-all backdrop-blur-sm;
+  }
+  
+  .skill-tag-primary {
+    @apply bg-brown-700/30 text-brown-200 border border-brown-600/20 hover:bg-brown-700/40 hover:border-brown-500/30;
+  }
+  
+  .skill-tag-secondary {
+    @apply bg-gray-800/40 text-cream-100 border border-gray-700/30 hover:bg-gray-800/60 hover:border-gray-600/40;
+  }
+}
+
+/* Animation keyframes */
+@keyframes noise-shift {
+  0% {
+    transform: translate(0, 0);
+  }
+  20% {
+    transform: translate(-3%, 3%);
+  }
+  40% {
+    transform: translate(-6%, -3%);
+  }
+  60% {
+    transform: translate(3%, -6%);
+  }
+  80% {
+    transform: translate(6%, 3%);
+  }
+  100% {
+    transform: translate(0, 0);
+  }
+}
+
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 0%;
+  }
+  20% {
+    background-position: 20% 20%;
+  }
+  40% {
+    background-position: 60% 40%;
+  }
+  60% {
+    background-position: 80% 60%;
+  }
+  80% {
+    background-position: 40% 80%;
+  }
+  100% {
+    background-position: 0% 100%;
+  }
+}
+
+@keyframes mesh-animation {
+  0% {
+    transform: rotate(0deg) scale(1.2);
+    opacity: 0.03;
+  }
+  25% {
+    transform: rotate(0.5deg) scale(1.25);
+    opacity: 0.035;
+  }
+  50% {
+    transform: rotate(1deg) scale(1.3);
+    opacity: 0.04;
+  }
+  75% {
+    transform: rotate(0.5deg) scale(1.25);
+    opacity: 0.035;
+  }
+  100% {
+    transform: rotate(0deg) scale(1.2);
+    opacity: 0.03;
+  }
+}
+
+@keyframes grain-animation {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  12.5% {
+    transform: translate(-1.5%, 1.5%) scale(1.005);
+  }
+  25% {
+    transform: translate(-3%, 0.5%) scale(0.995);
+  }
+  37.5% {
+    transform: translate(1.5%, -1.5%) scale(1.01);
+  }
+  50% {
+    transform: translate(0.5%, 2%) scale(0.99);
+  }
+  62.5% {
+    transform: translate(-2%, -0.5%) scale(1.005);
+  }
+  75% {
+    transform: translate(2%, 0%) scale(0.995);
+  }
+  87.5% {
+    transform: translate(-1%, 1%) scale(1.01);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+
+@keyframes particle-animation {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0;
+  }
+  10% {
+    opacity: var(--opacity);
+  }
+  90% {
+    opacity: var(--opacity);
+  }
+  95% {
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(calc(-100vh - 20px)) translateX(calc(var(--drift) * 80px));
+    opacity: 0;
+  }
+}
+
+@keyframes gradient-flow {
+  0% {
+    background-position: 0% 50%;
+    opacity: 0.05;
+  }
+  33% {
+    background-position: 50% 25%;
+    opacity: 0.065;
+  }
+  66% {
+    background-position: 100% 50%;
+    opacity: 0.08;
+  }
+  100% {
+    background-position: 0% 50%;
+    opacity: 0.05;
+  }
+}
+
+@keyframes aurora-flow {
+  0% {
+    transform: rotate(-20deg) translateY(5%) scale(1);
+    opacity: 0.05;
+    filter: blur(60px);
+  }
+  33% {
+    transform: rotate(-21deg) translateY(0%) scale(1.05);
+    opacity: 0.065;
+    filter: blur(65px);
+  }
+  66% {
+    transform: rotate(-22deg) translateY(-5%) scale(1.1);
+    opacity: 0.08;
+    filter: blur(70px);
+  }
+  100% {
+    transform: rotate(-20deg) translateY(5%) scale(1);
+    opacity: 0.05;
+    filter: blur(60px);
+  }
+}
+
+@keyframes blob-float {
+  0% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    border-radius: 50%;
+  }
+  25% {
+    transform: translateY(-2%) translateX(2%) rotate(1deg) scale(1.03);
+    border-radius: 51% 49% 50.5% 49.5%;
+  }
+  50% {
+    transform: translateY(-3%) translateX(3%) rotate(2deg) scale(1.05);
+    border-radius: 52% 48% 51% 49%;
+  }
+  75% {
+    transform: translateY(-1%) translateX(1%) rotate(1deg) scale(1.02);
+    border-radius: 51% 49% 50.5% 49.5%;
+  }
+  100% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+    border-radius: 50%;
+  }
+}
+
+@keyframes star-twinkle {
+  0% {
+    opacity: var(--base-opacity);
+    transform: scale(1) translateZ(0);
+  }
+  25% {
+    opacity: calc(var(--base-opacity) * 1.25);
+    transform: scale(1.05) translateZ(1px);
+  }
+  50% {
+    opacity: calc(var(--base-opacity) * 1.5);
+    transform: scale(1.1) translateZ(2px);
+  }
+  75% {
+    opacity: calc(var(--base-opacity) * 1.25);
+    transform: scale(1.05) translateZ(1px);
+  }
+  100% {
+    opacity: var(--base-opacity);
+    transform: scale(1) translateZ(0);
+  }
+}
+
+/* Add these new animations and visual enhancements */
+
+/* Improved section transitions */
+section {
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Enhanced card hover effects */
+.card:hover {
+  transform: translateY(-5px) !important;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3) !important;
+  border-color: var(--brown-600) !important;
+  background-color: rgba(30, 20, 15, 0.9) !important;
+}
+
+/* Subtle link hover animation */
+a:not(.button-primary):not(.button-secondary) {
+  position: relative;
+  transition: color 0.3s ease;
+}
+
+a:not(.button-primary):not(.button-secondary)::after {
+  content: '';
+  position: absolute;
+  width: 0;
+  height: 1px;
+  bottom: -2px;
+  left: 0;
+  background-color: var(--brown-400);
+  transition: width 0.3s ease;
+}
+
+a:not(.button-primary):not(.button-secondary):hover::after {
+  width: 100%;
+}
+
+/* Enhanced button animations */
+.button-primary, .button-secondary {
+  transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.button-primary:hover, .button-secondary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+.button-primary:active, .button-secondary:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 5px -1px rgba(0, 0, 0, 0.3);
+}
+
+/* Improved text gradient animation */
+.text-gradient {
+  background: linear-gradient(90deg, var(--brown-400), var(--brown-600), var(--brown-400));
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: gradient 8s ease infinite;
+}
+
+@keyframes gradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Optimized performance for animations */
+.animate-optimized {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Reduced motion preference support */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Improved focus styles for accessibility */
+:focus {
+  outline: 2px solid var(--brown-500);
+  outline-offset: 2px;
+}
+
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+:focus-visible {
+  outline: 2px solid var(--brown-500);
+  outline-offset: 2px;
+} 
