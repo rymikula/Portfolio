@@ -58,7 +58,7 @@ const ExperienceItem = ({ title, organization, period, description, index, icon 
       
       {/* Content Card */}
       <div 
-        className={`card relative bg-gray-900/60 backdrop-blur-sm p-7 rounded-lg transition-all duration-200 ${isHovered ? 'bg-[rgba(30,20,15,0.9)] border-[#725037] shadow-lg transform -translate-y-1' : 'border-transparent'}`}
+        className={`card relative bg-gray-900/60 backdrop-blur-sm p-7 rounded-lg transition-all duration-200 ${isHovered ? 'bg-[rgba(30,20,15,0.9)] border-[#725037] shadow-lg transform -translate-y-1' : 'border-gray-700'}`}
         style={{ 
           zIndex: isHovered ? 50 : 20,
           borderWidth: '1px',
@@ -155,8 +155,12 @@ const EducationItem = ({ title, organization, period, courses, index, icon = <Fa
       
       {/* Content Card */}
       <div 
-        className={`card relative bg-gray-900/60 backdrop-blur-sm p-7 ${isHovered ? 'bg-[rgba(30,20,15,0.9)] border-[#725037] shadow-lg transform -translate-y-1' : ''}`}
-        style={{ zIndex: 9999 }}
+        className={`card relative bg-gray-900/60 backdrop-blur-sm p-7 rounded-lg transition-all duration-200 ${isHovered ? 'bg-[rgba(30,20,15,0.9)] border-[#725037] shadow-lg transform -translate-y-1' : 'border-gray-700'}`}
+        style={{ 
+          zIndex: isHovered ? 50 : 20,
+          borderWidth: '1px',
+          cursor: 'pointer'
+        }}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
       >

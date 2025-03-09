@@ -392,6 +392,8 @@ function Scene() {
         autoRotateSpeed={0.6}
         target={[0, 0, 0]}
         makeDefault
+        enableDamping
+        dampingFactor={0.05}
       />
     </>
   )
@@ -408,15 +410,47 @@ function Loader() {
 
 export default function Hero() {
   const [sceneReady, setSceneReady] = useState(false);
+  const [scrollY, setScrollY] = useState(0);
+  const scrollThreshold = 100; // Hide indicator after scrolling 100px
 
   useEffect(() => {
     window.scrollTo(0, 0);
+    
+    // Add touch event handler for mobile
+    const handleTouchMove = (e: TouchEvent) => {
+      // If touch movement is more horizontal than vertical, prevent default
+      if (e.touches.length === 1) {
+        const touch = e.touches[0];
+        const moveX = Math.abs(touch.clientX - touch.screenX);
+        const moveY = Math.abs(touch.clientY - touch.screenY);
+        
+        // Only prevent default for horizontal scrolling
+        if (moveX > moveY) {
+          e.preventDefault();
+        }
+      }
+    };
+    
+    // Track scroll position
+    const handleScroll = () => {
+      setScrollY(window.scrollY);
+    };
+    
+    // Add event listeners
+    document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('scroll', handleScroll);
+    
+    // Clean up
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
     <div className="relative h-screen w-full bg-[#1a0f0a] z-20 overflow-hidden">
       {/* 3D Scene Container */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden" style={{ touchAction: 'pan-y pinch-zoom' }}>
         <Canvas
           camera={{
             position: [0, 0, 8],
@@ -432,6 +466,7 @@ export default function Hero() {
           onCreated={() => {
             setTimeout(() => setSceneReady(true), 500);
           }}
+          className="touch-auto"
         >
           <Suspense fallback={null}>
             <Scene />
@@ -472,6 +507,34 @@ export default function Hero() {
             </motion.p>
           </div>
         </div>
+        
+        {/* Scroll indicator */}
+        <motion.div 
+          className="absolute bottom-8 left-0 right-0 flex justify-center pointer-events-none"
+          initial={{ opacity: 0 }}
+          animate={{ 
+            opacity: sceneReady && scrollY < scrollThreshold ? 1 : 0,
+            y: scrollY < scrollThreshold ? 0 : 20
+          }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="flex flex-col items-center">
+            <p className="text-white text-sm mb-2">Scroll Down</p>
+            <div className="w-6 h-10 border-2 border-white rounded-full flex justify-center p-1">
+              <motion.div 
+                className="w-1 h-2 bg-white rounded-full"
+                animate={{ 
+                  y: [0, 6, 0],
+                }}
+                transition={{ 
+                  repeat: Infinity, 
+                  duration: 1.5,
+                  ease: "easeInOut"
+                }}
+              />
+            </div>
+          </div>
+        </motion.div>
       </div>
     </div>
   )
