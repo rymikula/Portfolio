@@ -12,16 +12,24 @@ import {
   Sky,
   useTexture,
   Points,
-  PointMaterial
+  PointMaterial,
+  AdaptiveDpr,
+  AdaptiveEvents,
+  BakeShadows,
+  PerformanceMonitor
 } from '@react-three/drei'
 import { useRef, useState, useEffect, Suspense, useMemo } from 'react'
 import * as THREE from 'three'
 import { motion } from 'framer-motion'
 
-// Create a context to share visibility state
+// Create a context to share visibility and device state
 import { createContext, useContext } from 'react'
 
-const VisibilityContext = createContext({ isVisible: true })
+const AppContext = createContext({ 
+  isVisible: true,
+  isMobile: false,
+  isLowPerformance: false
+})
 
 function SpaceSkybox() {
   return (
@@ -46,18 +54,26 @@ function SpaceSkybox() {
 function AnimatedShape() {
   const mainMeshRef = useRef<THREE.Mesh>(null)
   const sphereRefs = useRef<(THREE.Mesh | null)[]>([])
-  const { isVisible } = useContext(VisibilityContext)
+  const { isVisible, isMobile, isLowPerformance } = useContext(AppContext)
+
+  // Reduce complexity for mobile
+  const complexity = useMemo(() => {
+    return isMobile ? 0.5 : 1
+  }, [isMobile])
 
   useFrame((state, delta) => {
     // Only run animations if visible
     if (!isVisible) return
     
+    // Slow down animations on low-performance devices
+    const adjustedDelta = isLowPerformance ? delta * 0.5 : delta
+    
     if (mainMeshRef.current) {
       mainMeshRef.current.rotation.x = Math.sin(state.clock.elapsedTime) * 0.2
-      mainMeshRef.current.rotation.y += delta * 0.3
+      mainMeshRef.current.rotation.y += adjustedDelta * 0.3
     }
     
-    // Animate each sphere independently
+    // Animate each sphere independently, but skip some calculations on mobile
     sphereRefs.current.forEach((sphere, i) => {
       if (sphere) {
         const time = state.clock.elapsedTime
@@ -68,36 +84,48 @@ function AnimatedShape() {
         
         // Calculate unique orbit parameters for each sphere
         const orbitRadius = baseRadius + (i * 0.3) // Gradually increasing orbit sizes
-        const speed = 0.2 + (i * 0.1) // More varied speeds
+        const speed = (0.2 + (i * 0.1)) * (isLowPerformance ? 0.6 : 1) // More varied speeds, slower on mobile
         const phaseOffset = i * (Math.PI / 2) // Evenly spaced starting positions
         
-        // Calculate position with Lissajous-like curves for more complex orbits
-        const xFreq = 1 + (i * 0.2)
-        const zFreq = 2 - (i * 0.15)
+        // Skip complex calculations on mobile
+        let newPosition;
+        if (isLowPerformance) {
+          // Simpler orbit calculation for mobile
+          sphere.position.x = Math.cos(time * speed + phaseOffset) * orbitRadius
+          sphere.position.y = verticalOffset + (i * 0.8 - 1.2)
+          sphere.position.z = Math.sin(time * speed + phaseOffset) * (orbitRadius * 0.8)
+        } else {
+          // Full complex orbital pattern for desktop
+          const xFreq = 1 + (i * 0.2)
+          const zFreq = 2 - (i * 0.15)
+          
+          // Position calculation with complex orbital pattern
+          sphere.position.x = Math.cos(time * speed * xFreq + phaseOffset) * orbitRadius
+          sphere.position.y = verticalOffset + (i * 0.8 - 1.2) // Distributed height levels
+          sphere.position.z = Math.sin(time * speed * zFreq + phaseOffset) * (orbitRadius * 0.8)
+          
+          // Apply unique tilt to each orbit
+          const tiltAngle = (i * Math.PI / 4) // 45-degree increments
+          const rotationMatrix = new THREE.Matrix4()
+          rotationMatrix.makeRotationX(tiltAngle)
+          const position = new THREE.Vector3(sphere.position.x, sphere.position.y, sphere.position.z)
+          position.applyMatrix4(rotationMatrix)
+          
+          sphere.position.copy(position)
+        }
         
-        // Position calculation with complex orbital pattern
-        sphere.position.x = Math.cos(time * speed * xFreq + phaseOffset) * orbitRadius
-        sphere.position.y = verticalOffset + (i * 0.8 - 1.2) // Distributed height levels
-        sphere.position.z = Math.sin(time * speed * zFreq + phaseOffset) * (orbitRadius * 0.8)
+        // Enhanced rotation animation, reduced for mobile
+        const rotSpeed = (0.8 + (i * 0.2)) * (isLowPerformance ? 0.5 : 1)
+        sphere.rotation.x += adjustedDelta * (rotSpeed + (isLowPerformance ? 0 : Math.sin(time + i)))
+        sphere.rotation.y += adjustedDelta * (rotSpeed * 1.2 + (isLowPerformance ? 0 : Math.cos(time + i)))
+        sphere.rotation.z += adjustedDelta * (rotSpeed * 0.8 + (isLowPerformance ? 0 : Math.sin(time * 1.5 + i)))
         
-        // Apply unique tilt to each orbit
-        const tiltAngle = (i * Math.PI / 4) // 45-degree increments
-        const rotationMatrix = new THREE.Matrix4()
-        rotationMatrix.makeRotationX(tiltAngle)
-        const position = new THREE.Vector3(sphere.position.x, sphere.position.y, sphere.position.z)
-        position.applyMatrix4(rotationMatrix)
-        
-        sphere.position.copy(position)
-        
-        // Enhanced rotation animation
-        const rotSpeed = 0.8 + (i * 0.2)
-        sphere.rotation.x += delta * (rotSpeed + Math.sin(time + i))
-        sphere.rotation.y += delta * (rotSpeed * 1.2 + Math.cos(time + i))
-        sphere.rotation.z += delta * (rotSpeed * 0.8 + Math.sin(time * 1.5 + i))
-        
-        // Scale variation based on position
+        // Scale variation based on position, simplified for mobile
         const baseSphereScale = 0.25
-        const breathingScale = 1 + Math.sin(time * 1.5 + i * Math.PI / 2) * 0.1
+        let breathingScale = 1;
+        if (!isLowPerformance) {
+          breathingScale += Math.sin(time * 1.5 + i * Math.PI / 2) * 0.1;
+        }
         sphere.scale.set(
           baseSphereScale * breathingScale,
           baseSphereScale * breathingScale,
@@ -107,19 +135,32 @@ function AnimatedShape() {
     })
   })
 
+  // Reduce geometry complexity for mobile
+  const torusKnotArgs = useMemo(() => {
+    return isMobile ? 
+      [1, 0.3, 100, 16] as [number, number, number, number] : 
+      [1, 0.3, 200, 32] as [number, number, number, number]
+  }, [isMobile])
+  
+  const sphereArgs = useMemo(() => {
+    return isMobile ? 
+      [1, 16, 16] as [number, number, number] : 
+      [1, 32, 32] as [number, number, number]
+  }, [isMobile])
+
   return (
     <group>
       {/* Main torus knot */}
       <Float
-        speed={2}
-        rotationIntensity={2}
-        floatIntensity={1}
+        speed={2 * (isLowPerformance ? 0.6 : 1)}
+        rotationIntensity={2 * (isLowPerformance ? 0.6 : 1)}
+        floatIntensity={1 * (isLowPerformance ? 0.6 : 1)}
       >
         <mesh
           ref={mainMeshRef}
           scale={1.2}
         >
-          <torusKnotGeometry args={[1, 0.3, 200, 32]} />
+          <torusKnotGeometry args={torusKnotArgs} />
           <MeshDistortMaterial
             color="#2c1810"
             envMapIntensity={2}
@@ -128,8 +169,8 @@ function AnimatedShape() {
             metalness={0.9}
             transmission={0.8}
             roughness={0.2}
-            speed={3}
-            distort={0.4}
+            speed={3 * (isLowPerformance ? 0.5 : 1)}
+            distort={0.4 * (isLowPerformance ? 0.7 : 1)}
             radius={1}
           />
         </mesh>
@@ -149,7 +190,7 @@ function AnimatedShape() {
             Math.sin(angle) * (3.5 + i * 0.3)
           ]}
         >
-          <sphereGeometry args={[1, 32, 32]} />
+          <sphereGeometry args={sphereArgs} />
           <MeshDistortMaterial
             color={i % 2 === 0 ? "#3d2317" : "#4a2f25"}
             envMapIntensity={1.5}
@@ -158,8 +199,8 @@ function AnimatedShape() {
             metalness={0.9}
             transmission={0.8}
             roughness={0.2}
-            speed={2 + i}
-            distort={0.4 + (i * 0.1)}
+            speed={(2 + i) * (isLowPerformance ? 0.5 : 1)}
+            distort={(0.4 + (i * 0.1)) * (isLowPerformance ? 0.7 : 1)}
             radius={1}
           />
         </mesh>
@@ -169,8 +210,9 @@ function AnimatedShape() {
 }
 
 function StarField() {
-  // Reduce star count for better performance while maintaining visual density
-  const count = 5000
+  // Reduce star count for mobile
+  const { isMobile, isVisible, isLowPerformance } = useContext(AppContext)
+  const count = isMobile ? 1500 : 5000;
   const [starData] = useState(() => {
     const positions = new Float32Array(count * 3)
     const colors = new Float32Array(count * 3)
@@ -216,13 +258,14 @@ function StarField() {
   })
 
   const pointsRef = useRef<THREE.Points>(null)
-  const { isVisible } = useContext(VisibilityContext)
   
   useFrame((state) => {
     // Only run animations if visible
     if (!isVisible || !pointsRef.current) return
     
-    pointsRef.current.rotation.y = state.clock.elapsedTime * 0.02
+    // Reduce rotation speed on mobile
+    const rotationSpeed = isMobile ? 0.01 : 0.02;
+    pointsRef.current.rotation.y = state.clock.elapsedTime * rotationSpeed
     if (pointsRef.current.material instanceof THREE.ShaderMaterial) {
       pointsRef.current.material.uniforms.time.value = state.clock.elapsedTime
     }
@@ -329,15 +372,26 @@ function StarField() {
   )
 }
 
-// Optimization component to pause/resume rendering
+// Optimization component to pause/resume rendering and adjust quality
 function RenderOptimizer() {
-  const { gl, scene, camera } = useThree()
-  const { isVisible } = useContext(VisibilityContext)
+  const { gl, scene, camera, viewport } = useThree()
+  const { isVisible, isMobile, isLowPerformance } = useContext(AppContext)
   
   useEffect(() => {
     // Define animation function outside conditional blocks
     function animate() {
       gl.render(scene, camera);
+    }
+    
+    // Apply mobile-specific optimizations
+    if (isMobile) {
+      // Reduce pixel ratio for mobile
+      gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+      
+      // Disable antialiasing if performance is low
+      if (isLowPerformance) {
+        gl.setPixelRatio(1);
+      }
     }
     
     // Only set up animation loop if visible
@@ -358,46 +412,73 @@ function RenderOptimizer() {
     return () => {
       gl.setAnimationLoop(null);
     };
-  }, [gl, isVisible, scene, camera]);
+  }, [gl, isVisible, scene, camera, isMobile, isLowPerformance, viewport]);
   
   return null;
 }
 
 function Scene() {
-  const { isVisible } = useContext(VisibilityContext)
+  const { isVisible, isMobile, isLowPerformance } = useContext(AppContext)
+  
+  // Local state for scene-specific performance adjustments
+  const [lowPerformance, setLowPerformance] = useState(isLowPerformance)
+  
+  // Effect to sync context performance state with local state
+  useEffect(() => {
+    setLowPerformance(isLowPerformance)
+  }, [isLowPerformance])
   
   // Modify OrbitControls to respect visibility
-  const autoRotateSpeed = isVisible ? 0.6 : 0 // Stop auto-rotation when not visible
+  const autoRotateSpeed = isVisible ? (isMobile ? 0.3 : 0.6) : 0 // Lower rotation speed on mobile
+  
+  // Scale down particle effects on mobile or when performance is low
+  const particleScale = (isMobile || lowPerformance) ? 0.5 : 1;
+  const particleCount = (isMobile || lowPerformance) ? 0.5 : 1;
   
   return (
     <>
       {/* Space environment */}
       <color attach="background" args={['#1a0f0a']} />
       <Environment preset="sunset" background blur={0.8} />
-      <fog attach="fog" args={['#1a0f0a', 15, 35]} />
+      <fog attach="fog" args={['#1a0f0a', isMobile ? 10 : 15, isMobile ? 25 : 35]} />
       
-      {/* Add render optimizer */}
+      {/* Performance monitoring and optimization */}
       <RenderOptimizer />
+      <AdaptiveDpr pixelated />
+      <AdaptiveEvents />
+      <BakeShadows />
+      <PerformanceMonitor 
+        onDecline={() => {
+          // Further reduce quality when performance declines
+          console.log("Performance declining, reducing quality");
+          setLowPerformance(true);
+        }}
+      />
       
       {/* Enhanced base lighting */}
       <ambientLight intensity={0.25} color="#3d2317" />
       <directionalLight position={[10, 10, 5]} intensity={1.2} color="#5c3a2e" />
       <directionalLight position={[-10, -10, -5]} intensity={0.9} color="#4a2f25" />
       
-      {/* Enhanced gradient effect using strategically placed lights */}
-      <pointLight position={[0, 15, 0]} intensity={1.8} color="#6b4433" />
-      <pointLight position={[0, -15, 0]} intensity={1.8} color="#8b5e3c" />
-      <pointLight position={[15, 0, 0]} intensity={1.2} color="#4a2f25" />
-      <pointLight position={[-15, 0, 0]} intensity={1.2} color="#5c3a2e" />
+      {/* Reduce number of lights on mobile */}
+      {!isMobile && (
+        <>
+          {/* Enhanced gradient effect using strategically placed lights */}
+          <pointLight position={[0, 15, 0]} intensity={1.8} color="#6b4433" />
+          <pointLight position={[0, -15, 0]} intensity={1.8} color="#8b5e3c" />
+          <pointLight position={[15, 0, 0]} intensity={1.2} color="#4a2f25" />
+          <pointLight position={[-15, 0, 0]} intensity={1.2} color="#5c3a2e" />
+        </>
+      )}
       
       {/* Enhanced center light for the shape */}
       <pointLight position={[0, 0, 2]} intensity={1.8} color="#fff5e6" />
 
       {/* Main animated shape with enhanced Float properties */}
       <Float
-        speed={1.5}
-        rotationIntensity={1.2}
-        floatIntensity={1.5}
+        speed={1.5 * (isMobile ? 0.6 : 1)}
+        rotationIntensity={1.2 * (isMobile ? 0.6 : 1)}
+        floatIntensity={1.5 * (isMobile ? 0.6 : 1)}
       >
         <AnimatedShape />
       </Float>
@@ -405,37 +486,39 @@ function Scene() {
       {/* Optimized background star field with realistic stars */}
       <StarField />
       
-      {/* Enhanced brown nebula effects - increased size and count */}
+      {/* Enhanced brown nebula effects - reduced for mobile */}
       <Sparkles
-        count={80}
-        scale={35}
-        size={10}
-        speed={0.15}
+        count={80 * particleCount}
+        scale={35 * particleScale}
+        size={10 * particleScale}
+        speed={0.15 * (isMobile ? 0.6 : 1)}
         color="#8b5e3c"
         opacity={0.5}
       />
 
-      {/* Enhanced bright accent stars - increased size and count */}
+      {/* Enhanced bright accent stars - reduced for mobile */}
       <Sparkles
-        count={35}
-        scale={12}
-        size={8}
-        speed={0.4}
+        count={35 * particleCount}
+        scale={12 * particleScale}
+        size={8 * particleScale}
+        speed={0.4 * (isMobile ? 0.6 : 1)}
         color="#fff"
         opacity={0.95}
       />
       
-      {/* Enhanced additional bright stars layer */}
-      <Sparkles
-        count={20}
-        scale={10}
-        size={10}
-        speed={0.3}
-        color="#ffeedd"
-        opacity={1}
-      />
+      {/* Skip this layer on very low performance devices */}
+      {!lowPerformance && (
+        <Sparkles
+          count={20 * particleCount}
+          scale={10 * particleScale}
+          size={10 * particleScale}
+          speed={0.3 * (isMobile ? 0.6 : 1)}
+          color="#ffeedd"
+          opacity={1}
+        />
+      )}
 
-      {/* Enhanced orbit controls */}
+      {/* Enhanced orbit controls with reduced damping for mobile */}
       <OrbitControls
         enableZoom={false}
         enablePan={false}
@@ -446,7 +529,7 @@ function Scene() {
         target={[0, 0, 0]}
         makeDefault
         enableDamping
-        dampingFactor={0.05}
+        dampingFactor={isMobile ? 0.1 : 0.05}
       />
     </>
   )
@@ -466,16 +549,27 @@ export default function Hero() {
   const [scrollY, setScrollY] = useState(0);
   const scrollThreshold = 100; // Hide indicator after scrolling 100px
   const [isMobile, setIsMobile] = useState(false);
-  // Add state for visibility
+  // Add state for visibility and performance
   const [isVisible, setIsVisible] = useState(true);
+  const [isLowPerformance, setIsLowPerformance] = useState(false);
   const heroRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     window.scrollTo(0, 0);
     
-    // Check if device is mobile
+    // Check if device is mobile and evaluate performance capabilities
     const checkMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      const isMobileDevice = window.innerWidth <= 768;
+      setIsMobile(isMobileDevice);
+      
+      // Estimate if this is a low performance device
+      const isLowPerf = isMobileDevice && (
+        /Android/.test(navigator.userAgent) || 
+        /iPhone|iPad|iPod/.test(navigator.userAgent)
+      );
+      setIsLowPerformance(isLowPerf);
+      
+      console.log("Device:", isMobileDevice ? "Mobile" : "Desktop", "Performance:", isLowPerf ? "Low" : "High");
     };
     
     // Initial check
@@ -552,11 +646,11 @@ export default function Hero() {
 
   return (
     <div ref={heroRef} className="relative h-screen w-full bg-[#1a0f0a] z-20 overflow-hidden">
-      {/* Provide visibility context to Three.js components */}
-      <VisibilityContext.Provider value={{ isVisible }}>
+      {/* Provide context to Three.js components */}
+      <AppContext.Provider value={{ isVisible, isMobile, isLowPerformance }}>
         {/* 3D Scene Container */}
         <div className="absolute inset-0 overflow-hidden" style={{ touchAction: 'pan-y pinch-zoom' }}>
-          {/* Always render Canvas, no conditional rendering */}
+          {/* Always render Canvas */}
           <Canvas
             camera={{
               position: [0, 0, 8],
@@ -565,11 +659,19 @@ export default function Hero() {
               far: 1000
             }}
             gl={{
-              antialias: true,
+              antialias: !isMobile, // Disable antialiasing on mobile
               toneMapping: THREE.ACESFilmicToneMapping,
-              outputColorSpace: THREE.SRGBColorSpace
+              outputColorSpace: THREE.SRGBColorSpace,
+              powerPreference: "high-performance",
             }}
-            onCreated={() => {
+            dpr={[0.6, isLowPerformance ? 1 : 2]} // Lower resolution on mobile
+            frameloop={isVisible ? "always" : "demand"} // Only run frame loop when visible
+            performance={{ min: 0.1 }} // Allow very low performance
+            onCreated={(state) => {
+              // Force a lower pixel ratio on mobile
+              if (isMobile) {
+                state.gl.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+              }
               setTimeout(() => setSceneReady(true), 500);
             }}
             className="touch-auto"
@@ -664,7 +766,7 @@ export default function Hero() {
             </motion.div>
           )}
         </div>
-      </VisibilityContext.Provider>
+      </AppContext.Provider>
     </div>
   )
 } 
