@@ -1,6 +1,7 @@
 import './globals.css'
 import type { Metadata, Viewport } from 'next'
 import { Inter, JetBrains_Mono } from 'next/font/google'
+import { profile } from '../lib/content'
 
 const inter = Inter({
   subsets: ['latin'],
@@ -15,9 +16,8 @@ const mono = JetBrains_Mono({
   weight: ['400', '500', '700'],
 })
 
-const title = 'Ryan Mikula - Software Engineer'
-const description =
-  'Ryan Mikula - software engineer working on systems, graphics, and games. A timeline of my work.'
+const title = `${profile.name} - Software Engineer`
+const description = `${profile.name}. ${profile.tagline}`
 
 export const metadata: Metadata = {
   title,
