@@ -15,11 +15,23 @@ const mono = JetBrains_Mono({
   weight: ['400', '500', '700'],
 })
 
+const title = 'Ryan Mikula - Software Engineer'
+const description =
+  'Ryan Mikula - software engineer working on systems, graphics, and games. A timeline of my work.'
+
 export const metadata: Metadata = {
-  title: 'Ryan Mikula - Software Engineer',
-  description:
-    'Ryan Mikula - software engineer working on systems, graphics, and games. A timeline of my work.',
+  title,
+  description,
   metadataBase: new URL('https://ryanmikula.com'),
+  alternates: { canonical: '/' },
+  openGraph: {
+    title,
+    description,
+    url: 'https://ryanmikula.com',
+    siteName: 'Ryan Mikula',
+    type: 'website',
+  },
+  twitter: { card: 'summary', title, description },
 }
 
 export const viewport: Viewport = {
