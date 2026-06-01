@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   title: 'Ryan Mikula - Software Engineer',
   description:
     'Ryan Mikula - software engineer working on systems, graphics, and games. A timeline of my work.',
-  metadataBase: new URL('https://ryanmikula.dev'),
+  metadataBase: new URL('https://ryanmikula.com'),
 }
 
 export const viewport: Viewport = {
