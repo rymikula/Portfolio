@@ -1,95 +1,55 @@
-# Portfolio Website
+# Ryan Mikula - Portfolio
 
-A modern portfolio website built with Next.js, Tailwind CSS, Three.js, and Framer Motion.
+A small, deliberately minimal personal site. Instead of the usual list of jobs, the centerpiece is an **interactive, to-scale timeline** of my career: work and education are plotted on a shared time axis so the overlaps are visible at a glance (founding a game studio while in school, a master's running alongside a full-time role). Hover or click a role to read the detail.
 
-## Features
+Dark, restrained, and fast. One warm accent, one idea, no filler.
 
-- Stunning 3D hero section with animated elements
-- Responsive design that works on all devices
-- Smooth animations and transitions
-- Sections for About, Skills, Projects, Experience, and Contact
-- Subtle brown/gray/white color scheme
-- Interactive components
-- Optimized for performance
+## Stack
 
-## Tech Stack
+- **Next.js 14** (App Router), exported as a fully static site
+- **React 18** + **TypeScript**
+- **Tailwind CSS** with a small set of CSS-variable design tokens
+- No UI framework, no animation library, no 3D, no images. The timeline is plain React and CSS.
 
-- **Next.js**: React framework for server-rendered applications
-- **TypeScript**: Type-safe JavaScript
-- **Tailwind CSS**: Utility-first CSS framework
-- **Three.js**: 3D graphics library for WebGL
-- **React Three Fiber**: React renderer for Three.js
-- **Framer Motion**: Animation library for React
-- **React Icons**: Icon set for React applications
+## Structure
 
-## Getting Started
-
-### Prerequisites
-
-- Node.js (v14 or later)
-- npm or yarn
-
-### Installation
-
-1. Clone the repository
-   ```sh
-   git clone https://github.com/yourusername/portfolio-website.git
-   cd portfolio-website
-   ```
-
-2. Install dependencies
-   ```sh
-   npm install
-   # or
-   yarn install
-   ```
-
-3. Run the development server
-   ```sh
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-4. Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-## Project Structure
-
-- `app/`: Next.js app directory with pages and layouts
-- `components/`: React components organized by feature
-- `public/`: Static assets
-- `styles/`: Global styles and Tailwind configuration
-
-## Customization
-
-### Changing Colors
-
-The color scheme is defined in `tailwind.config.js` and can be easily changed to match your preference.
-
-### Updating Content
-
-- Update personal information in each component file
-- Replace placeholder images with your own in the `public/` directory
-- Add your own projects in the `Projects.tsx` component
-- Update experience and education information in `Experience.tsx`
-
-## Deployment
-
-This website can be easily deployed to platforms like Vercel, Netlify, or GitHub Pages.
-
-### Deploying to Vercel (Recommended)
-
-```sh
-npm install -g vercel
-vercel
 ```
+app/
+  layout.tsx       Fonts, metadata, root layout
+  page.tsx         Page composition (header, timeline, footer)
+  globals.css      Design tokens + base styles
+  icon.svg         Favicon
+components/
+  CareerTimeline.tsx   The timeline: lane packing, bars, mobile list
+  ui/SectionHeader.tsx Shared section header
+lib/
+  content.ts       Single source of truth for all content
+scripts/
+  fix-readlink.js  Node 22 / Windows build shim (see Notes)
+```
+
+All content (roles, dates, links, copy) lives in [`lib/content.ts`](lib/content.ts). Edit there and every component updates.
+
+## Develop
+
+```bash
+npm install
+npm run dev      # http://localhost:3000
+```
+
+## Build
+
+```bash
+npm run build    # static export to ./out
+```
+
+The output in `out/` is plain static files, deployable to Cloudflare Pages, GitHub Pages, Netlify, or any static host.
+
+## Notes
+
+- **Responsive timeline.** The to-scale Gantt is shown on wider screens; below the `md` breakpoint it gracefully becomes a clean stacked list, since a horizontal chart is awkward on a phone.
+- **`scripts/fix-readlink.js`** is a small `node -r` preload that works around a Node 22 regression on Windows where `fs.readlink` throws `EISDIR` on regular files, which otherwise breaks the webpack build. It is a no-op on other platforms.
 
 ## License
 
-This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Acknowledgments
-
-- Inspired by modern portfolio website designs
-- Three.js examples and documentation
-- Framer Motion examples 
+MIT, see [LICENSE](LICENSE).
